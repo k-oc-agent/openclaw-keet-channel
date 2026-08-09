@@ -26,6 +26,9 @@ npm run check
 The package uses TypeScript ESM and the OpenClaw plugin SDK from the local
 OpenClaw install during development.
 
+Stage install proof for the bridge-CLI MVP is documented in
+`docs/proofs/stage-install-fake-bridge.md`.
+
 ## Configuration Sketch
 
 ```json

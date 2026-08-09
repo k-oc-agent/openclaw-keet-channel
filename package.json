@@ -11,6 +11,7 @@
   "files": [
     "dist",
     "docs",
+    "scripts/fake-keet-bridge.mjs",
     "openclaw.plugin.json",
     "README.md"
   ],
@@ -45,12 +46,12 @@
       "markdownCapable": false
     },
     "install": {
-      "minHostVersion": "2026.7.1",
+      "minHostVersion": ">=2026.7.1",
       "npmSpec": "@plak/openclaw-keet-channel@0.1.0"
     },
     "compat": {
       "pluginApi": ">=2026.7.1",
-      "minGatewayVersion": "2026.7.1"
+      "minGatewayVersion": ">=2026.7.1"
     }
   }
 }
