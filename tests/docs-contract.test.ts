@@ -15,4 +15,14 @@ describe("documentation contract", () => {
     expect(spike).toContain("Threat Model");
     expect(spike).toContain("Acceptance Mapping");
   });
+
+  it("distinguishes profile proof from dedicated dev/stage host proof", async () => {
+    const profileProof = await readFile("docs/proofs/stage-install-proof-2026-08-09.md", "utf8");
+    const hostProof = await readFile("docs/proofs/dev-stage-host-install-proof-2026-08-09.md", "utf8");
+
+    expect(profileProof).toContain("package/profile proof only");
+    expect(hostProof).toMatch(/Dev and Stage are the\s+dedicated hosts `k-dev` and `k-stage`/);
+    expect(hostProof).toContain("Both hosts show Keet as installed, not configured and disabled");
+    expect(hostProof).toContain("Production use is still blocked by");
+  });
 });

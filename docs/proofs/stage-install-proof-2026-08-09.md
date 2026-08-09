@@ -4,10 +4,13 @@
 
 Issue: `Plak/openclaw-keet-channel#2`
 
-This proof installed the Keet channel plugin package into the isolated OpenClaw
-`stage` profile with a fake bridge. It did not configure a real Keet account,
-send to a real Keet chat, restart the production gateway, or mutate the
-production OpenClaw config.
+This proof installed the Keet channel plugin package into an isolated OpenClaw
+`stage` profile with a fake bridge on the main OpenClaw host. It did not
+configure a real Keet account, send to a real Keet chat, restart the production
+gateway, or mutate the production OpenClaw config.
+
+This is a package/profile proof only. The dedicated Dev/Stage host proof lives
+in `docs/proofs/dev-stage-host-install-proof-2026-08-09.md`.
 
 ## Evidence
 
