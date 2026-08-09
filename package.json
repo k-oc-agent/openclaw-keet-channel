@@ -1,0 +1,56 @@
+{
+  "name": "@plak/openclaw-keet-channel",
+  "version": "0.1.0",
+  "description": "OpenClaw channel plugin skeleton for Keet/Holepunch messaging.",
+  "type": "module",
+  "private": true,
+  "exports": {
+    ".": "./dist/src/index.js",
+    "./transport": "./dist/src/transport.js"
+  },
+  "files": [
+    "dist",
+    "docs",
+    "openclaw.plugin.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "check": "npm run build && npm test"
+  },
+  "peerDependencies": {
+    "openclaw": ">=2026.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.14",
+    "openclaw": "2026.7.1-2",
+    "typescript": "^5.9.2",
+    "vitest": "^3.2.4"
+  },
+  "openclaw": {
+    "extensions": [
+      "./src/index.ts"
+    ],
+    "runtimeExtensions": [
+      "./dist/src/index.js"
+    ],
+    "setupEntry": "./src/setup-entry.ts",
+    "runtimeSetupEntry": "./dist/src/setup-entry.js",
+    "channel": {
+      "id": "keet",
+      "label": "Keet",
+      "docsPath": "/plugins/community#keet",
+      "blurb": "P2P Keet messaging through an OpenClaw channel plugin.",
+      "markdownCapable": false
+    },
+    "install": {
+      "minHostVersion": "2026.7.1",
+      "npmSpec": "@plak/openclaw-keet-channel@0.1.0"
+    },
+    "compat": {
+      "pluginApi": ">=2026.7.1",
+      "minGatewayVersion": "2026.7.1"
+    }
+  }
+}
