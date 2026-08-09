@@ -1,0 +1,16 @@
+stages:
+  - verify
+
+verify:
+  stage: verify
+  image: node:24-bookworm
+  script:
+    - rm -rf node_modules dist
+    - npm ci
+    - npm run check
+    - npm pack --pack-destination .
+  artifacts:
+    when: always
+    paths:
+      - "*.tgz"
+    expire_in: 7 days

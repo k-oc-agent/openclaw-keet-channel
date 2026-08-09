@@ -1,0 +1,116 @@
+{
+  "id": "keet",
+  "name": "Keet",
+  "description": "OpenClaw channel plugin for Keet/Holepunch messaging.",
+  "activation": {
+    "onStartup": false
+  },
+  "channels": [
+    "keet"
+  ],
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  },
+  "channelConfigs": {
+    "keet": {
+      "label": "Keet",
+      "description": "P2P Keet messaging channel. MVP uses a local bridge-cli transport; Pear SDK support is a later gate.",
+      "schema": {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "defaultAccount": {
+            "type": "string"
+          },
+          "accounts": {
+            "type": "object",
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+            },
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": {
+                  "type": "boolean"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "profileDir": {
+                  "type": "string"
+                },
+                "stateDir": {
+                  "type": "string"
+                },
+                "bridgeCommand": {
+                  "type": "string"
+                },
+                "dmPolicy": {
+                  "type": "string",
+                  "enum": [
+                    "pairing",
+                    "allowlist",
+                    "open",
+                    "disabled"
+                  ],
+                  "default": "pairing"
+                },
+                "allowFrom": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "defaultTo": {
+                  "type": "string"
+                },
+                "groups": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "allowFrom": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "requireMention": {
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "uiHints": {
+        "dmPolicy": {
+          "label": "Keet DM Policy",
+          "help": "Direct-message access policy. Keep pairing or allowlist for production."
+        },
+        "bridgeCommand": {
+          "label": "Bridge Command",
+          "help": "Path to a local Keet bridge CLI. Do not store recovery phrases or backup secrets here."
+        }
+      }
+    }
+  }
+}
