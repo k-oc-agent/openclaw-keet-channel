@@ -16,6 +16,14 @@ import {
   type KeetAccountConfig,
 } from "./config.js";
 import { keetMessageAdapter } from "./message-adapter.js";
+export {
+  buildInboundStateRecord,
+  dedupeKeyForInbound,
+  routeKeetInbound,
+  type KeetInboundEvent,
+  type KeetInboundRoute,
+  type KeetInboundStateRecord,
+} from "./inbound.js";
 
 const keetConfigSchema = buildJsonChannelConfigSchema({
   type: "object",

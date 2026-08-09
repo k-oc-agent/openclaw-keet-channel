@@ -13,6 +13,7 @@ documentation. Native Pear/Holepunch transport is a later gate.
 - OpenClaw surface: external channel plugin
 - MVP transport: local bridge command with argv-only execution
 - Supported send capability: durable final text
+- Designed but not production-enabled: inbound routing and gateway lifecycle
 - Disabled for MVP: media, polls, reactions, thread/reply preservation
 - Production group enablement: blocked until explicit allowlist/security gate
 

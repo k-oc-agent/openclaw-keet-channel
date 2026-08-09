@@ -43,3 +43,41 @@ on Dev/Stage without touching production Keet groups.
   until Plak explicitly approves a real group target.
 - Any Stage smoke must record host identity, config path, plugin package hash,
   target chat id/name, and proof that production Keet groups were not used.
+
+## Inbound Event Flow
+
+Inbound support is designed but not enabled for production until a later bridge
+backend can provide stable message ids and sender ids.
+
+1. A bridge backend emits a normalized `KeetInboundEvent` with account id, chat
+   type, conversation id, sender id, message id, timestamp and transient text.
+2. The plugin resolves `channels.keet.accounts.<account>`.
+3. Direct messages are allowed only by DM policy:
+   - `disabled` rejects all.
+   - `pairing` rejects until an explicit pairing flow exists.
+   - `allowlist` accepts only `allowFrom` senders.
+   - `open` is valid only when `allowFrom` explicitly contains `*`.
+4. Group messages are rejected unless `groups.<conversationId>` exists, is
+   enabled, and allowlists the sender or uses `allowFrom: ["*"]`.
+5. Accepted events map to stable OpenClaw session keys:
+   - direct: `channel:keet:<account>:direct:<conversation>`
+   - group: `channel:keet:<account>:group:<conversation>`
+6. Dedupe/pending state stores message id, route metadata, timestamp, text hash
+   and text length. It must not persist raw message text.
+
+## Gateway Lifecycle
+
+The future account lifecycle should map cleanly onto OpenClaw channel account
+operations:
+
+- `startAccount`: validate bridge command/config, start or connect to the local
+  bridge backend, load dedupe state and report health.
+- `stopAccount`: stop polling/subscriptions, flush non-text state, close bridge
+  handles and leave Keet desktop/app state untouched.
+- health: configured/enabled state, bridge reachability, last receive cursor,
+  last send receipt and explicit degraded reasons.
+- rollback: disable `channels.keet.accounts.<account>.enabled` or uninstall the
+  plugin from the non-production profile; do not delete Keet identity material.
+
+Production groups remain blocked until sender identity, allowlist policy and
+real bridge lifecycle are reviewed against this spec.
