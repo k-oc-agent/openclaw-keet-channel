@@ -58,6 +58,40 @@ type BridgeCliArgsParams = {
   limit?: number;
 };
 
+function rejectEmptyTarget(target: string): string {
+  const trimmed = target.trim();
+  if (!trimmed) {
+    throw new Error("Keet target is required");
+  }
+  return trimmed;
+}
+
+export function normalizeKeetSendTarget(target: string): string {
+  const trimmed = rejectEmptyTarget(target);
+  if (trimmed.startsWith("channel:keet:")) {
+    const parts = trimmed.split(":");
+    const chatType = parts[3];
+    const conversationId = parts.slice(4).join(":").trim();
+    if ((chatType === "direct" || chatType === "group") && conversationId) {
+      return conversationId;
+    }
+    throw new Error("Keet target must be a Keet conversation target");
+  }
+  if (trimmed.startsWith("keet:group:")) {
+    return rejectEmptyTarget(trimmed.slice("keet:group:".length));
+  }
+  if (trimmed.startsWith("keet:direct:")) {
+    return rejectEmptyTarget(trimmed.slice("keet:direct:".length));
+  }
+  if (trimmed.startsWith("keet:")) {
+    return rejectEmptyTarget(trimmed.slice("keet:".length));
+  }
+  if (/^[a-z][a-z0-9+.-]*:/i.test(trimmed)) {
+    throw new Error("Keet target must be a Keet conversation target");
+  }
+  return trimmed;
+}
+
 export function buildBridgeCliArgs(params: BridgeCliArgsParams): string[] {
   if (!params.bridgeCommand.trim()) {
     throw new Error("Keet bridgeCommand is required");
@@ -83,14 +117,12 @@ export function buildBridgeCliArgs(params: BridgeCliArgsParams): string[] {
     }
     return argv;
   }
-  if (!params.to.trim()) {
-    throw new Error("Keet target is required");
-  }
+  const to = normalizeKeetSendTarget(params.to);
   if (!params.text.trim()) {
     throw new Error("Keet text is required");
   }
 
-  return [params.bridgeCommand, params.action, "--chat", params.to, "--text", params.text];
+  return [params.bridgeCommand, params.action, "--chat", to, "--text", params.text];
 }
 
 async function defaultRun(argv: string[], signal?: AbortSignal): Promise<{ stdout: string }> {
