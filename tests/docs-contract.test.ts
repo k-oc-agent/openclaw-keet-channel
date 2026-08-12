@@ -33,11 +33,26 @@ describe("documentation contract", () => {
 
     expect(bridge).toContain("send");
     expect(bridge).toContain("poll");
+    expect(bridge).toContain("invite");
+    expect(bridge).toContain("chat-info");
     expect(bridge).toContain("No recovery phrases");
     expect(bridge).toContain("MUST NOT persist raw message text");
+    expect(bridge).toContain("MUST NOT persist invite links or QR payloads");
     expect(release).toContain("Rollback");
     expect(release).toContain("disable the Keet channel in OpenClaw");
     expect(release).toContain("leave Keet identity material untouched");
     expect(readme).toContain("Inbound polling");
+  });
+
+  it("documents the Canary invite and join readback flow without storing secrets", async () => {
+    const runbook = await readFile("docs/proofs/canary-invite-join-runbook.md", "utf8");
+
+    expect(runbook).toContain("Issue: `Plak/openclaw-keet-channel#7`");
+    expect(runbook).toContain("Group info -> Share invite link -> Generate new link");
+    expect(runbook).toContain("keet-bridge invite");
+    expect(runbook).toContain("keet-bridge chat-info");
+    expect(runbook).toContain("memberCount >= 2");
+    expect(runbook).toContain("Do not paste invite links");
+    expect(runbook).toContain("Do not store QR payloads");
   });
 });

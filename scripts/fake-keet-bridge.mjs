@@ -22,6 +22,10 @@ function parseArgs(argv) {
       params.limit = Number(value);
     } else if (key === "--cursor") {
       params.cursor = value;
+    } else if (key === "--ttl-days") {
+      params.ttlDays = Number(value);
+    } else if (key === "--member") {
+      params.members = [...(params.members ?? []), value];
     } else {
       throw new Error(`unsupported option ${key}`);
     }
@@ -35,6 +39,10 @@ function sha256(value) {
 
 function stableMessageId(params) {
   return `fake-keet-${sha256(`${params.chat}\0${params.text}`).slice(0, 24)}`;
+}
+
+function stableInviteLink(params) {
+  return `keet://invite/fake-${sha256(`${params.chat}\0${params.ttlDays}`).slice(0, 32)}`;
 }
 
 function redactedArgv(argv) {
@@ -120,6 +128,61 @@ if (params.action === "send") {
       events,
     },
   })}\n`);
+} else if (params.action === "invite") {
+  if (!params.chat || !params.chat.trim()) {
+    throw new Error("fake Keet bridge requires --chat");
+  }
+  const ttlDays = Number.isInteger(params.ttlDays) && params.ttlDays > 0 ? params.ttlDays : 14;
+  if (ttlDays > 14) {
+    throw new Error("fake Keet bridge invite ttl must be <= 14 days");
+  }
+  const inviteLink = stableInviteLink({ chat: params.chat, ttlDays });
+
+  await appendEvidence({
+    kind: "fake-keet-bridge-invite",
+    action: params.action,
+    chat: params.chat,
+    ttlDays,
+    inviteSha256: sha256(inviteLink),
+    realKeetTouched: false,
+    createdAt: new Date().toISOString(),
+  });
+
+  process.stdout.write(`${JSON.stringify({
+    ok: true,
+    fake: true,
+    invite: {
+      chat: params.chat,
+      ttlDays,
+      link: inviteLink,
+      qrPayload: inviteLink,
+    },
+  })}\n`);
+} else if (params.action === "chat-info") {
+  if (!params.chat || !params.chat.trim()) {
+    throw new Error("fake Keet bridge requires --chat");
+  }
+  const members = params.members ?? [];
+
+  await appendEvidence({
+    kind: "fake-keet-bridge-chat-info",
+    action: params.action,
+    chat: params.chat,
+    memberCount: members.length,
+    memberIds: members,
+    realKeetTouched: false,
+    createdAt: new Date().toISOString(),
+  });
+
+  process.stdout.write(`${JSON.stringify({
+    ok: true,
+    fake: true,
+    chatInfo: {
+      chat: params.chat,
+      memberCount: members.length,
+      members,
+    },
+  })}\n`);
 } else {
-  throw new Error("fake Keet bridge only supports send and poll");
+  throw new Error("fake Keet bridge only supports send, poll, invite and chat-info");
 }
