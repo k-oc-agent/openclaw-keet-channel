@@ -54,11 +54,42 @@ clawhub package publish your-org/your-plugin --dry-run
 clawhub package publish your-org/your-plugin
 ```
 
-The locally installed `clawhub` CLI currently reports itself as `v0.5.0` and is
-skill-oriented; `clawhub package publish --help` falls back to the top-level
-skill CLI help and does not expose a `package` subcommand. Treat this as a
-publish-gate blocker until the correct ClawHub plugin-package publishing tool
-or registry flow is identified.
+The locally installed `/usr/bin/clawhub` currently reports itself as `v0.5.0`
+and is skill-oriented; `clawhub package publish --help` falls back to the
+top-level skill CLI help and does not expose a `package` subcommand.
+
+Use the current npm CLI package for plugin-package validation and dry-run
+instead:
+
+```bash
+npm exec clawhub@latest -- package validate .
+npm exec clawhub@latest -- package publish . --dry-run
+```
+
+Readback on 2026-08-13 showed `clawhub@0.23.3` exposes both
+`package validate` and `package publish --dry-run`. The publish dry-run also
+requires source metadata, so run it with the exact committed source:
+
+```bash
+npm exec clawhub@latest -- package publish . --dry-run \
+  --source-repo <public-github-repo-or-accepted-source-url> \
+  --source-commit <commit-sha>
+```
+
+Dry-run readback on 2026-08-13 rejected the internal K-GitLab URL
+`https://k-gitlab.bogacki.org/Plak/openclaw-keet-channel` with
+`--source-repo must be a GitHub repo or URL`. Do not continue to public publish
+until the source location is made public/accepted by ClawHub, for example by
+creating an approved public GitHub mirror or by confirming another accepted
+source URL format.
+
+The real publish command still remains approval-gated:
+
+```bash
+npm exec clawhub@latest -- package publish . \
+  --source-repo <public-github-repo-or-accepted-source-url> \
+  --source-commit <commit-sha>
+```
 
 The installed OpenClaw CLI can search and install ClawHub plugin packages:
 
@@ -95,4 +126,5 @@ Stop before asking for approval if any check finds:
 - missing public source or package metadata;
 - mismatched OpenClaw compatibility metadata;
 - missing ClawHub plugin-package publishing command/tooling;
+- ClawHub rejects the source repo or source URL;
 - any requirement to touch OC production before public publish.

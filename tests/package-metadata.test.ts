@@ -9,8 +9,10 @@ describe("package metadata", () => {
       /^>=[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/,
     );
     expect(packageJson.openclaw.install.npmSpec).toBe(`${packageJson.name}@${packageJson.version}`);
+    expect(packageJson.openclaw.install.clawhubSpec).toBe(`clawhub:${packageJson.name}`);
     expect(packageJson.openclaw.compat.pluginApi).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.openclaw.compat.minGatewayVersion).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
+    expect(packageJson.openclaw.release.publishToClawHub).toBe(true);
     expect(packageJson.private).toBeUndefined();
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.exports).toMatchObject({

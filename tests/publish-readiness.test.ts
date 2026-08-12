@@ -9,6 +9,10 @@ describe("public publish readiness contract", () => {
     expect(readiness).toContain("Do not run `clawhub package publish` without explicit Plak approval");
     expect(readiness).toContain("Do not run `npm publish` without explicit Plak approval");
     expect(readiness).toContain("No OC production install, reinstall, config mutation, or gateway restart");
+    expect(readiness).toContain("npm exec clawhub@latest -- package validate .");
+    expect(readiness).toContain("npm exec clawhub@latest -- package publish . --dry-run");
+    expect(readiness).toContain("--source-repo");
+    expect(readiness).toContain("--source-commit");
     expect(readiness).toContain("k-dev");
     expect(readiness).toContain("k-stage");
   });
