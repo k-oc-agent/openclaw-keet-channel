@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import {
   buildBridgeCliArgs,
+  normalizeKeetSendTarget,
   pollInboundWithBridgeCli,
   sendTextWithBridgeCli,
 } from "../src/transport.js";
@@ -62,6 +63,17 @@ describe("Keet bridge-cli transport", () => {
         text: "",
       }),
     ).toThrow("Keet text is required");
+  });
+
+  it("normalizes Keet-scoped targets and rejects foreign channel locators", () => {
+    expect(normalizeKeetSendTarget("Plak")).toBe("Plak");
+    expect(normalizeKeetSendTarget("keet:plak0815")).toBe("plak0815");
+    expect(normalizeKeetSendTarget("keet:group:K OC Keet Canary")).toBe("K OC Keet Canary");
+    expect(normalizeKeetSendTarget("channel:keet:default:direct:plak0815")).toBe("plak0815");
+    expect(normalizeKeetSendTarget("channel:keet:default:group:K OC: Canary")).toBe("K OC: Canary");
+    expect(() => normalizeKeetSendTarget("channel:1536020088753488003")).toThrow(
+      "Keet target must be a Keet conversation target",
+    );
   });
 
   it("parses bridge JSON receipts without executing through a shell", async () => {
