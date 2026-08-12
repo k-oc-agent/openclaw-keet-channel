@@ -8,6 +8,7 @@ describe("package metadata", () => {
     expect(packageJson.openclaw.install.minHostVersion).toMatch(
       /^>=[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?(?:\+[0-9A-Za-z.-]+)?$/,
     );
+    expect(packageJson.openclaw.install.npmSpec).toBe(`${packageJson.name}@${packageJson.version}`);
     expect(packageJson.openclaw.compat.pluginApi).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.openclaw.compat.minGatewayVersion).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.private).toBeUndefined();

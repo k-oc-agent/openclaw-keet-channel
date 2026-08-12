@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.2
+
+- Reject foreign OpenClaw channel locators before invoking the Keet bridge.
+- Document the corrected Dev/Stage gateway lifecycle proof for the current
+  release state.
+- Keep `0.1.1` as the gateway-native lifecycle baseline and use `0.1.2` for
+  the target-guarded internal release.
+
 ## 0.1.1
 
 - Add gateway-native Keet account lifecycle with bridge polling.

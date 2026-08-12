@@ -1,5 +1,14 @@
 # Release Notes and Rollback
 
+## 0.1.2 Scope
+
+- Keeps the `0.1.1` gateway-native lifecycle behavior.
+- Rejects foreign OpenClaw channel locators before the Keet bridge is invoked,
+  so accidental targets such as Discord channel ids cannot be interpreted as
+  Keet chat names.
+- Adds the corrected Dev/Stage gateway lifecycle proof for the current release
+  state.
+
 ## 0.1.1 Scope
 
 - Adds gateway-native account lifecycle for the Keet bridge poller.
