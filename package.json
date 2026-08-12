@@ -20,6 +20,7 @@
     "dist",
     "docs/adr",
     "docs/bridge-cli-contract.md",
+    "docs/publish-readiness.md",
     "docs/release.md",
     "docs/security",
     "docs/spec",
