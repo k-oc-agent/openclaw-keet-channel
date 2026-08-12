@@ -25,4 +25,19 @@ describe("documentation contract", () => {
     expect(hostProof).toContain("Both hosts show Keet as installed, not configured and disabled");
     expect(hostProof).toContain("Production use is still blocked by");
   });
+
+  it("documents the public bridge contract and rollback boundary", async () => {
+    const bridge = await readFile("docs/bridge-cli-contract.md", "utf8");
+    const release = await readFile("docs/release.md", "utf8");
+    const readme = await readFile("README.md", "utf8");
+
+    expect(bridge).toContain("send");
+    expect(bridge).toContain("poll");
+    expect(bridge).toContain("No recovery phrases");
+    expect(bridge).toContain("MUST NOT persist raw message text");
+    expect(release).toContain("Rollback");
+    expect(release).toContain("disable the Keet channel in OpenClaw");
+    expect(release).toContain("leave Keet identity material untouched");
+    expect(readme).toContain("Inbound polling");
+  });
 });

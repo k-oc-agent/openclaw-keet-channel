@@ -19,11 +19,19 @@ import { keetMessageAdapter } from "./message-adapter.js";
 export {
   buildInboundStateRecord,
   dedupeKeyForInbound,
+  processKeetInboundEvents,
   routeKeetInbound,
+  type KeetInboundDelivery,
   type KeetInboundEvent,
+  type KeetInboundProcessResult,
   type KeetInboundRoute,
   type KeetInboundStateRecord,
 } from "./inbound.js";
+export {
+  pollKeetInboundBatch,
+  type KeetInboundPollBatch,
+  type KeetInboundPollBatchParams,
+} from "./poller.js";
 
 const keetConfigSchema = buildJsonChannelConfigSchema({
   type: "object",
