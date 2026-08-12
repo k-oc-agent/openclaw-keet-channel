@@ -14,6 +14,7 @@ describe("package metadata", () => {
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.exports).toMatchObject({
       ".": "./dist/src/index.js",
+      "./gateway": "./dist/src/gateway.js",
       "./inbound": "./dist/src/inbound.js",
       "./poller": "./dist/src/poller.js",
       "./transport": "./dist/src/transport.js",

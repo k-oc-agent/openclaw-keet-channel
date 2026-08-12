@@ -15,6 +15,7 @@ import {
   validateKeetAccount,
   type KeetAccountConfig,
 } from "./config.js";
+import { createKeetGatewayAdapter } from "./gateway.js";
 import { keetMessageAdapter } from "./message-adapter.js";
 export {
   buildInboundStateRecord,
@@ -27,6 +28,17 @@ export {
   type KeetInboundRoute,
   type KeetInboundStateRecord,
 } from "./inbound.js";
+export {
+  createKeetGatewayAdapter,
+  pollAndDispatchKeetInbound,
+  type KeetDeliveryDispatchContext,
+  type KeetGatewayAdapter,
+  type KeetGatewayPollDeps,
+  type KeetGatewayPollParams,
+  type KeetGatewayPollResult,
+  type KeetGatewayPollState,
+  type KeetGatewayStatusSink,
+} from "./gateway.js";
 export {
   pollKeetInboundBatch,
   type KeetInboundPollBatch,
@@ -85,6 +97,7 @@ export const keetChannelPlugin: ChannelPlugin<KeetAccountConfig> = createChatCha
       },
     },
     message: keetMessageAdapter,
+    gateway: createKeetGatewayAdapter(),
   },
   security: {
     dm: {

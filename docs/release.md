@@ -1,5 +1,13 @@
 # Release Notes and Rollback
 
+## 0.1.1 Scope
+
+- Adds gateway-native account lifecycle for the Keet bridge poller.
+- The external bridge CLI is still the transport boundary, but the OpenClaw
+  gateway owns account start/stop/health for configured Keet accounts.
+- The systemd bridge/timer path remains a local fallback/rollback aid, not the
+  primary release health path.
+
 ## 0.1.0 Scope
 
 - Keet channel id `keet`.

@@ -39,6 +39,7 @@ export type KeetInboundStateRecord = {
 
 export type KeetInboundDelivery = {
   accountId: string;
+  chatType: "direct" | "group";
   sessionKey: string;
   routeKey: string;
   conversationId: string;
@@ -187,6 +188,7 @@ export function processKeetInboundEvents(
     if (route.allowed && route.sessionKey && route.routeKey) {
       deliveries.push({
         accountId: route.accountId,
+        chatType: event.chatType,
         sessionKey: route.sessionKey,
         routeKey: route.routeKey,
         conversationId: event.conversationId,

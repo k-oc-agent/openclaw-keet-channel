@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- Add gateway-native Keet account lifecycle with bridge polling.
+- Dispatch allowlisted inbound Keet events through the OpenClaw channel
+  runtime instead of relying only on the external timer bridge.
+- Report runtime health/activity from the plugin account lifecycle.
+
 ## 0.1.0
 
 - Add OpenClaw channel plugin metadata for Keet.
