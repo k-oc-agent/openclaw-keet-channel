@@ -10,5 +10,21 @@ describe("package metadata", () => {
     );
     expect(packageJson.openclaw.compat.pluginApi).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.openclaw.compat.minGatewayVersion).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
+    expect(packageJson.private).toBeUndefined();
+    expect(packageJson.license).toBe("MIT");
+    expect(packageJson.exports).toMatchObject({
+      ".": "./dist/src/index.js",
+      "./inbound": "./dist/src/inbound.js",
+      "./poller": "./dist/src/poller.js",
+      "./transport": "./dist/src/transport.js",
+    });
+    expect(packageJson.files).toEqual(expect.arrayContaining([
+      "CHANGELOG.md",
+      "LICENSE",
+      "docs/bridge-cli-contract.md",
+      "docs/release.md",
+    ]));
+    expect(packageJson.files).not.toContain("docs");
+    expect(packageJson.files).not.toContain("docs/proofs");
   });
 });

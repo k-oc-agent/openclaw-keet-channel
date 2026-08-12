@@ -1,0 +1,37 @@
+# Release Notes and Rollback
+
+## 0.1.0 Scope
+
+- Keet channel id `keet`.
+- Durable outbound text through a local bridge CLI.
+- Inbound polling through the documented bridge `poll` command.
+- Direct-message release target with `dmPolicy: "allowlist"` and sender
+  `plak0815`.
+- Group enablement remains out of scope for the first public release.
+- Native Pear/Holepunch transport remains out of scope for the first public
+  release.
+
+## Release Checklist
+
+1. Run `npm ci`.
+2. Run `npm run check`.
+3. Run `npm pack --pack-destination .`.
+4. Inspect the package contents and confirm there are no secrets, invite links,
+   QR payloads, recovery phrases or local profile paths.
+5. Install in Dev/Stage before production.
+6. Verify fake bridge `send` and `poll` behavior.
+7. Verify real Keet DM canary with `plak0815` only.
+
+## Rollback
+
+Rollback is OpenClaw-side only:
+
+- disable the Keet channel in OpenClaw config, or remove the plugin from the
+  active OpenClaw profile;
+- stop the bridge polling timer/process if one was enabled;
+- restart or reload the OpenClaw gateway only if required for config reload;
+- leave Keet identity material untouched;
+- leave Keet Desktop profile data, recovery phrases and DM/chat history
+  untouched.
+
+Rollback does not delete Keet chats or reset Keet identities.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildInboundStateRecord,
   dedupeKeyForInbound,
+  processKeetInboundEvents,
   routeKeetInbound,
 } from "../src/inbound.js";
 
@@ -107,5 +108,60 @@ describe("Keet inbound routing", () => {
     });
     expect(JSON.stringify(record)).not.toContain("secret message text");
     expect(record.textSha256).toMatch(/^[a-f0-9]{64}$/);
+  });
+
+  it("turns poll events into transient deliveries and persistent redacted state", () => {
+    const batch = processKeetInboundEvents(
+      cfg,
+      [
+        {
+          accountId: "lab",
+          chatType: "direct",
+          conversationId: "peer-plak",
+          senderId: "peer-plak",
+          messageId: "m-5",
+          text: "deliver this once",
+          timestampMs: 5,
+        },
+        {
+          accountId: "lab",
+          chatType: "direct",
+          conversationId: "peer-plak",
+          senderId: "peer-plak",
+          messageId: "m-5",
+          text: "deliver this once",
+          timestampMs: 5,
+        },
+        {
+          accountId: "lab",
+          chatType: "direct",
+          conversationId: "peer-evil",
+          senderId: "peer-evil",
+          messageId: "m-6",
+          text: "do not deliver",
+          timestampMs: 6,
+        },
+      ],
+      new Set(),
+    );
+
+    expect(batch.deliveries).toHaveLength(1);
+    expect(batch.deliveries[0]).toMatchObject({
+      accountId: "lab",
+      sessionKey: "channel:keet:lab:direct:peer-plak",
+      text: "deliver this once",
+    });
+    expect(batch.records).toHaveLength(2);
+    expect(batch.records.map((record) => record.accepted)).toEqual([true, false]);
+    expect(batch.records[1]).toMatchObject({
+      reason: "sender-not-allowlisted",
+      accepted: false,
+    });
+    expect([...batch.seenKeys].sort()).toEqual([
+      "keet:lab:direct:peer-evil:m-6",
+      "keet:lab:direct:peer-plak:m-5",
+    ]);
+    expect(JSON.stringify(batch.records)).not.toContain("deliver this once");
+    expect(JSON.stringify(batch.records)).not.toContain("do not deliver");
   });
 });

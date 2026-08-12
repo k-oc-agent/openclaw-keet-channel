@@ -37,6 +37,23 @@ export type KeetInboundStateRecord = {
   reason?: string;
 };
 
+export type KeetInboundDelivery = {
+  accountId: string;
+  sessionKey: string;
+  routeKey: string;
+  conversationId: string;
+  senderId: string;
+  messageId?: string;
+  timestampMs?: number;
+  text: string;
+};
+
+export type KeetInboundProcessResult = {
+  deliveries: KeetInboundDelivery[];
+  records: KeetInboundStateRecord[];
+  seenKeys: Set<string>;
+};
+
 function sha256(value: string): string {
   return createHash("sha256").update(value).digest("hex");
 }
@@ -144,5 +161,46 @@ export function buildInboundStateRecord(
     routeKey: route.routeKey,
     accepted: route.allowed,
     reason: route.reason,
+  };
+}
+
+export function processKeetInboundEvents(
+  cfg: unknown,
+  events: KeetInboundEvent[],
+  seenKeys: Set<string> = new Set(),
+): KeetInboundProcessResult {
+  const nextSeenKeys = new Set(seenKeys);
+  const deliveries: KeetInboundDelivery[] = [];
+  const records: KeetInboundStateRecord[] = [];
+
+  for (const event of events) {
+    const key = dedupeKeyForInbound(event);
+    if (nextSeenKeys.has(key)) {
+      continue;
+    }
+    nextSeenKeys.add(key);
+
+    const route = routeKeetInbound(cfg, event);
+    const record = buildInboundStateRecord(event, route);
+    records.push(record);
+
+    if (route.allowed && route.sessionKey && route.routeKey) {
+      deliveries.push({
+        accountId: route.accountId,
+        sessionKey: route.sessionKey,
+        routeKey: route.routeKey,
+        conversationId: event.conversationId,
+        senderId: event.senderId,
+        messageId: event.messageId?.trim() || undefined,
+        timestampMs: event.timestampMs,
+        text: event.text,
+      });
+    }
+  }
+
+  return {
+    deliveries,
+    records,
+    seenKeys: nextSeenKeys,
   };
 }
