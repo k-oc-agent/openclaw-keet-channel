@@ -55,4 +55,17 @@ describe("documentation contract", () => {
     expect(runbook).toContain("Do not paste invite links");
     expect(runbook).toContain("Do not store QR payloads");
   });
+
+  it("documents the ClawHub dogfood proof and keeps production gated", async () => {
+    const proof = await readFile("docs/proofs/clawhub-dogfood-proof-2026-08-13.md", "utf8");
+
+    expect(proof).toContain("Plak/openclaw-keet-channel#14");
+    expect(proof).toContain("clawhub:@plak/openclaw-keet-channel");
+    expect(proof).toContain("@plak/openclaw-keet-channel@0.1.2");
+    expect(proof).toContain("k-dev");
+    expect(proof).toContain("k-stage");
+    expect(proof).toContain("realKeetTouched=false");
+    expect(proof).toContain("No OC production install, reinstall, config mutation, or gateway restart");
+    expect(proof).toContain("Approve OC production dogfood install for Keet ClawHub package v0.1.2");
+  });
 });
