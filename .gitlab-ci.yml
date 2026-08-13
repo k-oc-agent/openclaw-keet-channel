@@ -6,6 +6,8 @@ verify:
   image: node:24-bookworm
   script:
     - rm -rf node_modules dist
+    - mkdir -p .tmp
+    - export TMPDIR="$PWD/.tmp"
     - npm ci
     - npm run check
     - npm pack --pack-destination .
