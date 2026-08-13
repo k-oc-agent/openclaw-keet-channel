@@ -12,6 +12,7 @@ It prepares the release decision without publishing anything.
 - Package: `@plak/openclaw-keet-channel`
 - Version: `0.1.2`
 - Channel id: `keet`
+- Public source mirror: `https://github.com/k-oc-agent/openclaw-keet-channel`
 - Public scope: direct-message bridge transport with allowlist-first inbound
   polling.
 - Out of scope for first public release: productive groups, native Pear or

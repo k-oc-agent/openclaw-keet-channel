@@ -13,6 +13,11 @@ describe("package metadata", () => {
     expect(packageJson.openclaw.compat.pluginApi).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.openclaw.compat.minGatewayVersion).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.openclaw.release.publishToClawHub).toBe(true);
+    expect(packageJson.homepage).toBe("https://github.com/k-oc-agent/openclaw-keet-channel");
+    expect(packageJson.repository).toMatchObject({
+      type: "git",
+      url: "git+https://github.com/k-oc-agent/openclaw-keet-channel.git",
+    });
     expect(packageJson.private).toBeUndefined();
     expect(packageJson.license).toBe("MIT");
     expect(packageJson.exports).toMatchObject({
