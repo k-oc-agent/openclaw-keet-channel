@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.6
+
+- Add a repo-owned Keet Desktop CDP bridge candidate for internal Dev/Stage
+  proofing.
+- Keep polling idempotent when Keet exposes only a virtualized visible message
+  window by relying on persisted message-id dedupe instead of DOM index cursors.
+- Filter visible `K OpenClaw` echo rows before they can be emitted as inbound
+  Keet events.
+
 ## 0.1.5
 
 - Persist the gateway poll cursor and dedupe keys when `stateDir` is configured.
