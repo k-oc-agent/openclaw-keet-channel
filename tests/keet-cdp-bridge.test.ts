@@ -4,6 +4,62 @@ import { describe, expect, it } from "vitest";
 const bridgeModuleUrl = pathToFileURL(`${process.cwd()}/scripts/keet-cdp-bridge.mjs`).href;
 
 describe("Keet CDP bridge candidate", () => {
+  it("derives poll targets from the bridge config when the plugin passes no chat", async () => {
+    const bridge = await import(bridgeModuleUrl);
+    const config = bridge.normalizeBridgeConfig({
+      sender_aliases: { Plak: "plak0815", "@plak0815": "plak0815" },
+      direct_peers: [
+        {
+          chat_name: "Plak",
+          peer_id: "plak0815",
+          enabled: true,
+        },
+      ],
+      group_topics: [
+        {
+          chat_name: "K OC Keet Canary 2026-08-11",
+          chat_id: "K OC Keet Canary 2026-08-11",
+          allowed_senders: ["plak0815"],
+          enabled: true,
+        },
+      ],
+    });
+
+    expect(bridge.enabledTargets(config)).toEqual([
+      {
+        chat: "Plak",
+        chatType: "direct",
+        conversationId: "plak0815",
+      },
+      {
+        chat: "K OC Keet Canary 2026-08-11",
+        chatType: "group",
+        conversationId: "K OC Keet Canary 2026-08-11",
+        allowFrom: ["plak0815"],
+      },
+    ]);
+  });
+
+  it("resolves bare send targets to the configured Keet sidebar chat name", async () => {
+    const bridge = await import(bridgeModuleUrl);
+    const config = bridge.normalizeBridgeConfig({
+      direct_peers: [
+        {
+          chat_name: "Plak",
+          peer_id: "plak0815",
+          enabled: true,
+        },
+      ],
+      group_topics: [],
+    });
+
+    expect(bridge.resolveChatTarget(config, "plak0815")).toEqual({
+      chat: "Plak",
+      chatType: "direct",
+      conversationId: "plak0815",
+    });
+  });
+
   it("returns latest visible events regardless of an old DOM-window cursor", async () => {
     const bridge = await import(bridgeModuleUrl);
 
@@ -71,6 +127,41 @@ describe("Keet CDP bridge candidate", () => {
       chat: "K OC Keet Canary 2026-08-11",
       sender: "plak0815",
       text: "Angekommen",
+    });
+  });
+
+  it("applies the configured group sender allowlist before emitting inbound events", async () => {
+    const bridge = await import(bridgeModuleUrl);
+    const target = {
+      chatType: "group",
+      conversationId: "K OC Keet Canary 2026-08-11",
+      allowFrom: ["plak0815"],
+    };
+
+    const blocked = bridge.eventFromRow(
+      {
+        id: "m-blocked",
+        direction: "incoming",
+        sender: "Mallory",
+        text: "not allowed",
+      },
+      { target, aliases: { Plak: "plak0815" } },
+    );
+    const allowed = bridge.eventFromRow(
+      {
+        id: "m-allowed",
+        direction: "incoming",
+        sender: "Plak",
+        text: "allowed",
+      },
+      { target, aliases: { Plak: "plak0815" } },
+    );
+
+    expect(blocked).toBeNull();
+    expect(allowed).toMatchObject({
+      id: "m-allowed",
+      sender: "plak0815",
+      text: "allowed",
     });
   });
 

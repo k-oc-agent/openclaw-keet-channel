@@ -80,6 +80,9 @@ The delivery chain for this project is:
 - Local prototype: `bin/keet_bridge_once.py`, `bin/keet_cdp_driver.mjs`,
   `bin/keet-bridge-guard` in `Plak/k-workspace`
 - Repo-owned CDP bridge candidate: `scripts/keet-cdp-bridge.mjs`
+  - reads enabled direct/group targets from `/etc/openclaw/keet-bridge.json`
+    or `KEET_BRIDGE_CONFIG`
+  - supports the plugin poll contract without a `--chat` argument
 - OpenClaw docs: `docs/plugins/sdk-channel-plugins.md`,
   `docs/plugins/sdk-channel-inbound.md`, `docs/plugins/sdk-channel-outbound.md`
 - Tracking issue: `Plak/openclaw-keet-channel#1`

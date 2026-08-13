@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.7
+
+- Make the repo-owned Keet Desktop CDP bridge candidate match the current
+  plugin polling contract: `poll --account ... --limit ...` derives enabled
+  direct and group targets from the local bridge config instead of requiring
+  `--chat`.
+- Resolve bare send targets such as `plak0815` to configured Keet sidebar chat
+  names before opening Keet Desktop.
+- Prefer Keet sidebar room-list entries when opening a chat to avoid selecting
+  matching sender text inside the active message history.
+
 ## 0.1.6
 
 - Add a repo-owned Keet Desktop CDP bridge candidate for internal Dev/Stage
