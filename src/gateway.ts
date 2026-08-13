@@ -1,3 +1,6 @@
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { dirname, join } from "node:path";
+
 import {
   createAccountStatusSink,
   runPassiveAccountLifecycle,
@@ -18,6 +21,13 @@ export type KeetGatewayStatusSink = (patch: Omit<ChannelAccountSnapshot, "accoun
 export type KeetGatewayPollState = {
   cursor?: string;
   seenKeys: Set<string>;
+};
+
+export type KeetPersistedGatewayState = {
+  version: 1;
+  cursor?: string;
+  seenKeys: string[];
+  updatedAt: number;
 };
 
 export type KeetDeliveryDispatchContext = {
@@ -84,6 +94,71 @@ type RuntimeRoute = {
   agentId: string;
   sessionKey: string;
 };
+
+const maxPersistedSeenKeys = 1_000;
+
+function safeStateAccountSegment(accountId: string): string {
+  return accountId.replace(/[^a-zA-Z0-9._-]/g, "_") || "default";
+}
+
+export function keetGatewayStateFile(account: KeetAccountConfig): string | null {
+  if (!account.stateDir?.trim()) {
+    return null;
+  }
+  return join(account.stateDir, `gateway-${safeStateAccountSegment(account.accountId)}.json`);
+}
+
+function boundedSeenKeys(seenKeys: Set<string>): string[] {
+  const entries = [...seenKeys];
+  return entries.slice(Math.max(0, entries.length - maxPersistedSeenKeys));
+}
+
+export async function loadKeetGatewayPollState(account: KeetAccountConfig): Promise<KeetGatewayPollState> {
+  const file = keetGatewayStateFile(account);
+  if (!file) {
+    return { seenKeys: new Set() };
+  }
+
+  try {
+    const raw = JSON.parse(await readFile(file, "utf8")) as Partial<KeetPersistedGatewayState>;
+    return {
+      cursor: typeof raw.cursor === "string" && raw.cursor.trim() ? raw.cursor : undefined,
+      seenKeys: new Set(Array.isArray(raw.seenKeys)
+        ? raw.seenKeys.filter((key): key is string => typeof key === "string" && key.trim().length > 0)
+        : []),
+    };
+  } catch (error) {
+    const code = typeof error === "object" && error !== null && "code" in error
+      ? (error as { code?: unknown }).code
+      : undefined;
+    if (code === "ENOENT") {
+      return { seenKeys: new Set() };
+    }
+    throw error;
+  }
+}
+
+export async function saveKeetGatewayPollState(
+  account: KeetAccountConfig,
+  state: KeetGatewayPollState,
+  now: () => number = Date.now,
+): Promise<void> {
+  const file = keetGatewayStateFile(account);
+  if (!file) {
+    return;
+  }
+
+  const payload: KeetPersistedGatewayState = {
+    version: 1,
+    cursor: state.cursor,
+    seenKeys: boundedSeenKeys(state.seenKeys),
+    updatedAt: now(),
+  };
+  const tmp = `${file}.tmp`;
+  await mkdir(dirname(file), { recursive: true, mode: 0o700 });
+  await writeFile(tmp, `${JSON.stringify(payload, null, 2)}\n`, { mode: 0o600 });
+  await rename(tmp, file);
+}
 
 type RuntimeSurface = {
   routing?: {
@@ -311,14 +386,22 @@ export function createKeetGatewayAdapter(deps: KeetGatewayPollDeps = {}): KeetGa
         setStatus: ctx.setStatus,
       });
       const pollIntervalMs = 30_000;
-      const state: KeetGatewayPollState = {
-        seenKeys: new Set(),
-      };
+      let state: KeetGatewayPollState = { seenKeys: new Set() };
       let stopped = false;
 
       await runPassiveAccountLifecycle({
         abortSignal: ctx.abortSignal,
         start: async () => {
+          try {
+            state = await loadKeetGatewayPollState(ctx.account);
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            ctx.log?.warn?.(`[${ctx.accountId}] Keet poll state load failed: ${message}`);
+            setStatus({
+              healthState: "degraded",
+              lastError: `poll state load failed: ${message}`,
+            });
+          }
           setStatus({
             running: true,
             connected: true,
@@ -342,6 +425,7 @@ export function createKeetGatewayAdapter(deps: KeetGatewayPollDeps = {}): KeetGa
                 channelRuntime: ctx.channelRuntime,
                 deps,
               });
+              await saveKeetGatewayPollState(ctx.account, state);
             } catch (error) {
               const message = error instanceof Error ? error.message : String(error);
               setStatus({
