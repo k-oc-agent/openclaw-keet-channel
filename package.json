@@ -4,10 +4,10 @@
   "description": "OpenClaw channel plugin for Keet/Holepunch messaging through a local bridge adapter.",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://k-gitlab.bogacki.org/Plak/openclaw-keet-channel",
+  "homepage": "https://github.com/k-oc-agent/openclaw-keet-channel",
   "repository": {
     "type": "git",
-    "url": "git+https://k-gitlab.bogacki.org/Plak/openclaw-keet-channel.git"
+    "url": "git+https://github.com/k-oc-agent/openclaw-keet-channel.git"
   },
   "exports": {
     ".": "./dist/src/index.js",
