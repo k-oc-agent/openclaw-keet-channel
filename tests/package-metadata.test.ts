@@ -26,6 +26,7 @@ describe("package metadata", () => {
       ".": "./dist/src/index.js",
       "./gateway": "./dist/src/gateway.js",
       "./inbound": "./dist/src/inbound.js",
+      "./join-diagnostics": "./dist/src/join-diagnostics.js",
       "./poller": "./dist/src/poller.js",
       "./transport": "./dist/src/transport.js",
     });
