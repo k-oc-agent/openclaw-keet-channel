@@ -1,5 +1,12 @@
 # Release Notes and Rollback
 
+## 0.1.4 Scope
+
+- Release-recovery bump for the `0.1.3` target resolver fix.
+- No runtime code change from `0.1.3`.
+- Required because ClawHub accepted/reserved version `0.1.3` but did not make
+  it visible or installable through package inspect/search/readiness.
+
 ## 0.1.3 Scope
 
 - Resolves Keet message targets through the OpenClaw messaging adapter so
