@@ -62,7 +62,7 @@
       "markdownCapable": false
     },
     "install": {
-      "minHostVersion": ">=2026.7.1",
+      "minHostVersion": ">=2026.7.1-2",
       "clawhubSpec": "clawhub:@plak/openclaw-keet-channel",
       "npmSpec": "@plak/openclaw-keet-channel@0.1.2"
     },
