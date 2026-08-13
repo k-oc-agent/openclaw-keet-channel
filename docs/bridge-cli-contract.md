@@ -63,6 +63,12 @@ message-id dedupe state for idempotency. Adapters MUST filter visible `K OpenCla
 before emitting inbound events, otherwise OpenClaw's own delivery/status
 messages can be replayed as Plak inbound.
 
+Because the plugin poll command intentionally has no `--chat` argument, local
+bridge adapters MUST derive enabled direct and group polling targets from their
+own local configuration. A CDP adapter that opens Keet Desktop chats SHOULD
+prefer sidebar room-list entries over generic text matches so that a direct
+peer name visible inside a group history does not select the wrong chat.
+
 ### invite
 
 ```bash

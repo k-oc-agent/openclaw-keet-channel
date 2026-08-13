@@ -1,19 +1,23 @@
 #!/usr/bin/env node
+import { readFile } from "node:fs/promises";
 
 const DEFAULT_CDP_URL = process.env.KEET_CDP_URL || "http://127.0.0.1:9223";
+const DEFAULT_CONFIG_PATH = process.env.KEET_BRIDGE_CONFIG || "/etc/openclaw/keet-bridge.json";
 
 export const supportedActions = ["send", "poll"];
 
 function parseArgs(argv) {
-  const [action, ...rest] = argv;
-  const args = { action };
-  for (let i = 0; i < rest.length; i += 1) {
-    const arg = rest[i];
+  const args = {};
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
     if (!arg.startsWith("--")) {
+      if (!args.action) {
+        args.action = arg;
+      }
       continue;
     }
     const key = arg.slice(2);
-    const next = rest[i + 1];
+    const next = argv[i + 1];
     if (next == null || next.startsWith("--")) {
       args[key] = true;
     } else {
@@ -29,6 +33,70 @@ function requireString(value, name) {
     throw new Error(`${name} is required`);
   }
   return value;
+}
+
+function readString(value) {
+  return typeof value === "string" && value.trim() ? value : undefined;
+}
+
+function readStringArray(value) {
+  return Array.isArray(value)
+    ? value.filter((entry) => typeof entry === "string" && entry.trim())
+    : [];
+}
+
+export async function loadBridgeConfig(path = DEFAULT_CONFIG_PATH) {
+  const text = await readFile(path, "utf8");
+  return normalizeBridgeConfig(JSON.parse(text));
+}
+
+export function normalizeBridgeConfig(raw) {
+  const config = raw && typeof raw === "object" && !Array.isArray(raw) ? raw : {};
+  const aliases = config.sender_aliases && typeof config.sender_aliases === "object" && !Array.isArray(config.sender_aliases)
+    ? Object.fromEntries(Object.entries(config.sender_aliases).map(([key, value]) => [String(key), String(value)]))
+    : {};
+  return {
+    senderAliases: aliases,
+    directPeers: Array.isArray(config.direct_peers) ? config.direct_peers : [],
+    groupTopics: Array.isArray(config.group_topics) ? config.group_topics : [],
+  };
+}
+
+export function enabledTargets(config) {
+  const targets = [];
+  for (const peer of config.directPeers ?? []) {
+    if (!peer || typeof peer !== "object" || peer.enabled === false) {
+      continue;
+    }
+    const chat = readString(peer.chat_name);
+    const conversationId = readString(peer.peer_id);
+    if (chat && conversationId) {
+      targets.push({ chat, chatType: "direct", conversationId });
+    }
+  }
+  for (const group of config.groupTopics ?? []) {
+    if (!group || typeof group !== "object" || group.enabled === false) {
+      continue;
+    }
+    const chat = readString(group.chat_name);
+    const conversationId = readString(group.chat_id);
+    if (chat && conversationId) {
+      targets.push({
+        chat,
+        chatType: "group",
+        conversationId,
+        allowFrom: readStringArray(group.allowed_senders),
+      });
+    }
+  }
+  return targets;
+}
+
+export function resolveChatTarget(config, chat) {
+  const requested = requireString(chat, "--chat");
+  return enabledTargets(config).find((target) =>
+    target.chat === requested || target.conversationId === requested,
+  ) ?? targetFromChat(requested);
 }
 
 export function isOpenClawEchoText(text) {
@@ -47,11 +115,20 @@ export function eventFromRow(row, { target, aliases }) {
     return null;
   }
   const sender = String(row.sender || target.conversationId);
+  const normalizedSender = aliases[sender] ?? sender;
+  if (
+    target.chatType === "group"
+    && Array.isArray(target.allowFrom)
+    && target.allowFrom.length > 0
+    && !target.allowFrom.includes(normalizedSender)
+  ) {
+    return null;
+  }
   return {
     id: row.id,
     chatType: target.chatType,
     chat: target.conversationId,
-    sender: aliases[sender] ?? sender,
+    sender: normalizedSender,
     text,
     timestampMs: Number.isFinite(row.timestampMs) ? row.timestampMs : 0,
   };
@@ -99,7 +176,26 @@ async function withKeetPage(cdpUrl, fn) {
 }
 
 async function openChat(page, chatName) {
-  await page.getByText(chatName, { exact: true }).first().click();
+  const clicked = await page.evaluate((name) => {
+    const roomItems = [...document.querySelectorAll('[data-testid="room-list-item"]')];
+    for (const item of roomItems) {
+      const lines = (item.innerText || "")
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+      const first = lines[0] || "";
+      const second = lines[1] || "";
+      const roomName = first.length <= 3 && second ? second : first;
+      if (roomName === name) {
+        item.click();
+        return true;
+      }
+    }
+    return false;
+  }, chatName);
+  if (!clicked) {
+    await page.getByText(chatName, { exact: true }).first().click();
+  }
   await page.waitForTimeout(900);
 }
 
@@ -159,10 +255,11 @@ async function sendText(page, text) {
 }
 
 async function runSend(args) {
-  const chat = requireString(args.chat, "--chat");
+  const config = await loadBridgeConfig(args.config || DEFAULT_CONFIG_PATH);
+  const target = resolveChatTarget(config, args.chat);
   const text = requireString(args.text, "--text");
   const sent = await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
-    await openChat(page, chat);
+    await openChat(page, target.chat);
     return await sendText(page, text);
   });
   return {
@@ -170,7 +267,7 @@ async function runSend(args) {
     send: {
       latestOutgoing: {
         id: sent.id,
-        chat,
+        chat: target.conversationId,
       },
     },
   };
@@ -178,17 +275,27 @@ async function runSend(args) {
 
 async function runPoll(args) {
   requireString(args.account, "--account");
-  const chat = requireString(args.chat, "--chat");
-  const target = targetFromChat(chat);
+  const config = await loadBridgeConfig(args.config || DEFAULT_CONFIG_PATH);
+  const targets = args.chat
+    ? [resolveChatTarget(config, args.chat)]
+    : enabledTargets(config);
+  if (targets.length === 0) {
+    throw new Error("No enabled Keet bridge targets configured");
+  }
   const limit = Number.parseInt(args.limit ?? "50", 10);
-  const rows = await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
-    await openChat(page, chat);
-    return await readActiveRows(page, target);
+  const events = [];
+  await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
+    for (const target of targets) {
+      await openChat(page, target.chat);
+      const rows = await readActiveRows(page, target);
+      for (const row of rows) {
+        const event = eventFromRow(row, { target, aliases: config.senderAliases });
+        if (event) {
+          events.push(event);
+        }
+      }
+    }
   });
-  const aliases = { Plak: "plak0815" };
-  const events = rows
-    .map((row) => eventFromRow(row, { target, aliases }))
-    .filter(Boolean);
   return buildPollPayload(events, { limit });
 }
 
