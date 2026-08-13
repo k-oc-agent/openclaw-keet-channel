@@ -17,6 +17,12 @@ import {
 } from "./config.js";
 import { createKeetGatewayAdapter } from "./gateway.js";
 import { keetMessageAdapter } from "./message-adapter.js";
+import {
+  inferKeetTargetChatType,
+  looksLikeKeetTargetId,
+  resolveKeetMessagingTarget,
+  resolveKeetOutboundSessionRoute,
+} from "./targets.js";
 export {
   buildInboundStateRecord,
   dedupeKeyForInbound,
@@ -97,6 +103,16 @@ export const keetChannelPlugin: ChannelPlugin<KeetAccountConfig> = createChatCha
       },
     },
     message: keetMessageAdapter,
+    messaging: {
+      targetPrefixes: ["keet"],
+      inferTargetChatType: inferKeetTargetChatType,
+      resolveOutboundSessionRoute: resolveKeetOutboundSessionRoute,
+      targetResolver: {
+        looksLikeId: looksLikeKeetTargetId,
+        hint: "<peer-id|keet:peer-id|keet:group:name>",
+        resolveTarget: resolveKeetMessagingTarget,
+      },
+    },
     gateway: createKeetGatewayAdapter(),
   },
   security: {

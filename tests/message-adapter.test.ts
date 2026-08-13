@@ -1,5 +1,31 @@
 import { describe, expect, it, vi } from "vitest";
+import { keetChannelPlugin } from "../src/index.js";
 import { createKeetMessageAdapter } from "../src/message-adapter.js";
+
+const cfg = {
+  session: {
+    dmScope: "per-channel-peer",
+  },
+  channels: {
+    keet: {
+      defaultAccount: "default",
+      accounts: {
+        default: {
+          bridgeCommand: "/usr/local/bin/keet-bridge",
+          dmPolicy: "allowlist",
+          allowFrom: ["plak0815"],
+          defaultTo: "plak0815",
+          groups: {
+            "K OC Keet Canary 2026-08-11": {
+              enabled: true,
+              allowFrom: ["plak0815"],
+            },
+          },
+        },
+      },
+    },
+  },
+};
 
 describe("Keet message adapter", () => {
   it("declares only durable text send support for the MVP", () => {
@@ -53,6 +79,66 @@ describe("Keet message adapter", () => {
         messageId: "keet-message-1",
         conversationId: "Plak",
       },
+    });
+  });
+
+  it("resolves direct Keet message targets for the generic message path", async () => {
+    const resolveTarget = keetChannelPlugin.messaging?.targetResolver?.resolveTarget;
+    expect(resolveTarget).toBeDefined();
+
+    expect(await resolveTarget!({
+      cfg,
+      accountId: "default",
+      input: "plak0815",
+      normalized: "plak0815",
+      preferredKind: "user",
+    })).toMatchObject({
+      to: "plak0815",
+      kind: "user",
+      display: "plak0815",
+      source: "normalized",
+    });
+
+    expect(await resolveTarget!({
+      cfg,
+      accountId: "default",
+      input: "keet:direct:plak0815",
+      normalized: "direct:plak0815",
+      preferredKind: "user",
+    })).toMatchObject({
+      to: "plak0815",
+      kind: "user",
+    });
+  });
+
+  it("resolves runtime Keet conversation targets without treating them as foreign channels", async () => {
+    const resolveTarget = keetChannelPlugin.messaging?.targetResolver?.resolveTarget;
+    expect(resolveTarget).toBeDefined();
+
+    expect(await resolveTarget!({
+      cfg,
+      accountId: "default",
+      input: "channel:keet:default:direct:plak0815",
+      normalized: "channel:keet:default:direct:plak0815",
+      preferredKind: "user",
+    })).toMatchObject({
+      to: "plak0815",
+      kind: "user",
+    });
+  });
+
+  it("builds outbound sessions that match inbound Keet direct sessions", async () => {
+    const route = await keetChannelPlugin.messaging?.resolveOutboundSessionRoute?.({
+      cfg,
+      agentId: "main",
+      accountId: "default",
+      target: "plak0815",
+    });
+
+    expect(route).toMatchObject({
+      sessionKey: "agent:main:keet:direct:plak0815",
+      recipientSessionExact: true,
+      to: "plak0815",
     });
   });
 });
