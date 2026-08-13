@@ -70,6 +70,9 @@
       "pluginApi": ">=2026.7.1",
       "minGatewayVersion": ">=2026.7.1"
     },
+    "build": {
+      "openclawVersion": "2026.7.1-2"
+    },
     "release": {
       "publishToClawHub": true
     }

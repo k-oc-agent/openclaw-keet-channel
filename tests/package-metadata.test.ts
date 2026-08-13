@@ -12,6 +12,10 @@ describe("package metadata", () => {
     expect(packageJson.openclaw.install.clawhubSpec).toBe(`clawhub:${packageJson.name}`);
     expect(packageJson.openclaw.compat.pluginApi).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
     expect(packageJson.openclaw.compat.minGatewayVersion).toMatch(/^>=[0-9]+\.[0-9]+\.[0-9]+/);
+    expect(packageJson.openclaw.build).toMatchObject({
+      openclawVersion: "2026.7.1-2",
+    });
+    expect(packageJson.openclaw.build.bundledDist).toBeUndefined();
     expect(packageJson.openclaw.release.publishToClawHub).toBe(true);
     expect(packageJson.homepage).toBe("https://github.com/k-oc-agent/openclaw-keet-channel");
     expect(packageJson.repository).toMatchObject({
