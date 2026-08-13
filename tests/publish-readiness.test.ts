@@ -15,6 +15,7 @@ describe("public publish readiness contract", () => {
     expect(readiness).toContain("--source-commit");
     expect(readiness).toContain("k-dev");
     expect(readiness).toContain("k-stage");
+    expect(readiness).not.toContain("k-gitlab.bogacki.org");
   });
 
   it("keeps publish readiness docs in the package allowlist", async () => {
