@@ -38,6 +38,8 @@ describe("documentation contract", () => {
     expect(bridge).toContain("No recovery phrases");
     expect(bridge).toContain("MUST NOT persist raw message text");
     expect(bridge).toContain("MUST NOT persist invite links or QR payloads");
+    expect(bridge).toContain("MUST NOT treat `cursor` as an index into a virtualized DOM window");
+    expect(bridge).toContain("MUST filter visible `K OpenClaw` echo rows");
     expect(release).toContain("Rollback");
     expect(release).toContain("disable the Keet channel in OpenClaw");
     expect(release).toContain("leave Keet identity material untouched");

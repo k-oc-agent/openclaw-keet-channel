@@ -56,6 +56,13 @@ The bridge returns JSON on stdout:
 `chatType` is `direct` or `group`. The plugin normalizes `chat` to
 `conversationId`, `sender` to `senderId`, and `id` to `messageId`.
 
+Bridge adapters that read a virtualized UI, such as Keet Desktop through CDP,
+MUST NOT treat `cursor` as an index into a virtualized DOM window. They should
+return the latest visible bounded event set and rely on the plugin's persisted
+message-id dedupe state for idempotency. Adapters MUST filter visible `K OpenClaw` echo rows
+before emitting inbound events, otherwise OpenClaw's own delivery/status
+messages can be replayed as Plak inbound.
+
 ### invite
 
 ```bash
