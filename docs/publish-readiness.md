@@ -77,8 +77,7 @@ npm exec clawhub@latest -- package publish . --dry-run \
   --source-commit <commit-sha>
 ```
 
-Dry-run readback on 2026-08-13 rejected the internal K-GitLab URL
-`https://k-gitlab.bogacki.org/Plak/openclaw-keet-channel` with
+Dry-run readback on 2026-08-13 rejected the internal GitLab source URL with
 `--source-repo must be a GitHub repo or URL`. Do not continue to public publish
 until the source location is made public/accepted by ClawHub, for example by
 creating an approved public GitHub mirror or by confirming another accepted
