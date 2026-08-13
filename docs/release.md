@@ -1,5 +1,14 @@
 # Release Notes and Rollback
 
+## 0.1.3 Scope
+
+- Resolves Keet message targets through the OpenClaw messaging adapter so
+  direct replies to allowlisted users can be delivered after gateway-native
+  inbound turns.
+- Supports bare allowlisted handles such as `plak0815`, explicit
+  `keet:direct:<handle>` targets, and OpenClaw runtime direct-session targets
+  without forwarding those locators to the bridge as chat names.
+
 ## 0.1.2 Scope
 
 - Keeps the `0.1.1` gateway-native lifecycle behavior.
