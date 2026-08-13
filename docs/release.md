@@ -1,5 +1,13 @@
 # Release Notes and Rollback
 
+## 0.1.5 Scope
+
+- Persists the gateway bridge-poll cursor and bounded dedupe keys when
+  `channels.keet.accounts.<account>.stateDir` is configured.
+- Stops stale Keet UI rows from being replayed as fresh inbound turns after
+  gateway restarts, Keet client restarts, or emergency recovery.
+- Keeps persistent gateway state redacted: raw message text is not stored.
+
 ## 0.1.4 Scope
 
 - Release-recovery bump for the `0.1.3` target resolver fix.

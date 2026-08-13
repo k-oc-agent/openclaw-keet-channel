@@ -18,6 +18,8 @@ on Dev/Stage without touching production Keet groups.
   shell command string.
 - Return OpenClaw `MessageReceipt` values with platform message ids.
 - Avoid storing message text in persistent plugin state.
+- Persist bridge-poll cursor and bounded dedupe keys under `stateDir` when
+  configured, so restarts do not replay old UI rows as new inbound turns.
 
 ## Non-Goals
 
@@ -71,7 +73,7 @@ The future account lifecycle should map cleanly onto OpenClaw channel account
 operations:
 
 - `startAccount`: validate bridge command/config, start or connect to the local
-  bridge backend, load dedupe state and report health.
+  bridge backend, load cursor/dedupe state and report health.
 - `stopAccount`: stop polling/subscriptions, flush non-text state, close bridge
   handles and leave Keet desktop/app state untouched.
 - health: configured/enabled state, bridge reachability, last receive cursor,

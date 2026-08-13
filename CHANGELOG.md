@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5
+
+- Persist the gateway poll cursor and dedupe keys when `stateDir` is configured.
+- Prevent old Keet rows from being replayed as fresh inbound turns after a
+  gateway restart, client restart, or emergency recovery.
+- Persistent state remains redacted: raw message text is not written.
+
 ## 0.1.4
 
 - Re-publish the `0.1.3` Keet target resolver fix after ClawHub reserved

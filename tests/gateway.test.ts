@@ -1,6 +1,12 @@
+import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 import {
   createKeetGatewayAdapter,
+  loadKeetGatewayPollState,
+  saveKeetGatewayPollState,
   pollAndDispatchKeetInbound,
   type KeetGatewayPollState,
 } from "../src/gateway.js";
@@ -31,6 +37,106 @@ const account = {
 };
 
 describe("Keet gateway poll lifecycle", () => {
+  it("persists only cursor and dedupe keys when a state directory is configured", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "keet-gateway-state-"));
+    try {
+      const statefulAccount = {
+        ...account,
+        stateDir: dir,
+      };
+      await saveKeetGatewayPollState(
+        statefulAccount,
+        {
+          cursor: "10",
+          seenKeys: new Set([
+            "keet:default:direct:plak0815:message-1",
+            "keet:default:direct:plak0815:message-2",
+          ]),
+        },
+        () => 1234,
+      );
+
+      const loaded = await loadKeetGatewayPollState(statefulAccount);
+      expect(loaded.cursor).toBe("10");
+      expect([...loaded.seenKeys]).toEqual([
+        "keet:default:direct:plak0815:message-1",
+        "keet:default:direct:plak0815:message-2",
+      ]);
+
+      const raw = await readFile(join(dir, "gateway-default.json"), "utf8");
+      expect(raw).toContain('"cursor": "10"');
+      expect(raw).not.toContain("hello from Plak");
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("loads the persisted cursor before first poll and stores the next cursor", async () => {
+    vi.useFakeTimers();
+    const dir = await mkdtemp(join(tmpdir(), "keet-gateway-state-"));
+    try {
+      const statefulAccount = {
+        ...account,
+        stateDir: dir,
+      };
+      await saveKeetGatewayPollState(statefulAccount, {
+        cursor: "9",
+        seenKeys: new Set(["keet:default:direct:plak0815:message-old"]),
+      });
+
+      const abort = new AbortController();
+      const setStatus = vi.fn();
+      const getStatus = vi.fn(() => ({ accountId: "default" }));
+      const pollBatch = vi.fn(async (params) => {
+        expect(params.cursor).toBe("9");
+        expect(params.seenKeys?.has("keet:default:direct:plak0815:message-old")).toBe(true);
+        return {
+          cursor: "10",
+          processed: {
+            deliveries: [],
+            records: [],
+            seenKeys: new Set([
+              "keet:default:direct:plak0815:message-old",
+              "keet:default:direct:plak0815:message-new",
+            ]),
+          },
+        };
+      });
+      const gateway = createKeetGatewayAdapter({
+        pollBatch,
+        dispatchDelivery: async () => {},
+        now: () => 1234,
+      });
+
+      const run = gateway.startAccount({
+        cfg,
+        account: statefulAccount,
+        accountId: "default",
+        abortSignal: abort.signal,
+        setStatus,
+        getStatus,
+        channelRuntime: {},
+      });
+      await vi.waitFor(() => {
+        expect(pollBatch).toHaveBeenCalledTimes(1);
+      });
+
+      abort.abort();
+      await vi.runOnlyPendingTimersAsync();
+      await run;
+
+      const loaded = await loadKeetGatewayPollState(statefulAccount);
+      expect(loaded.cursor).toBe("10");
+      expect([...loaded.seenKeys]).toEqual([
+        "keet:default:direct:plak0815:message-old",
+        "keet:default:direct:plak0815:message-new",
+      ]);
+    } finally {
+      vi.useRealTimers();
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("polls, dedupes, dispatches deliveries, and emits healthy runtime status", async () => {
     const state: KeetGatewayPollState = { seenKeys: new Set() };
     const setStatus = vi.fn();
