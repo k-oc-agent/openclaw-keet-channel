@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.4
+
+- Re-publish the `0.1.3` Keet target resolver fix after ClawHub reserved
+  `0.1.3` without making it visible or installable.
+- No runtime code change from `0.1.3`.
+
+## 0.1.3
+
+- Resolve Keet message targets through the OpenClaw messaging adapter.
+- Support bare allowlisted handles, explicit Keet direct targets, group targets
+  and OpenClaw runtime direct-session locators.
+
 ## 0.1.2
 
 - Reject foreign OpenClaw channel locators before invoking the Keet bridge.
