@@ -54,6 +54,9 @@ describe("documentation contract", () => {
     expect(runbook).toContain("memberCount >= 2");
     expect(runbook).toContain("Do not paste invite links");
     expect(runbook).toContain("Do not store QR payloads");
+    expect(runbook).toContain("Issue: `Plak/openclaw-keet-channel#16`");
+    expect(runbook).toContain("UNEXPECTED_ERROR: Autobase is closing");
+    expect(runbook).toContain("Do not clean or reset the Keet profile without explicit approval");
   });
 
   it("documents the ClawHub dogfood proof and keeps production gated", async () => {

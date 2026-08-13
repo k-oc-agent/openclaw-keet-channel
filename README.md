@@ -15,6 +15,8 @@ documentation. Native Pear/Holepunch transport is a later gate.
 - Supported send capability: durable final text
 - Inbound polling: bridge `poll` contract with allowlist routing and redacted
   dedupe state
+- Join diagnostics: redacted `Autobase is closing` detection for failed invite
+  joins before any profile recovery is attempted
 - Designed but not production-enabled: native gateway lifecycle
 - Disabled for MVP: media, polls, reactions, thread/reply preservation
 - Production group enablement: blocked until explicit allowlist/security gate

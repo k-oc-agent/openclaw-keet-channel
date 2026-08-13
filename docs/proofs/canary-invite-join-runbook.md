@@ -53,3 +53,41 @@ Expected members are the local K/OpenClaw Keet identity and Plak's Keet peer.
 If invite generation, QR handoff or membership readback is ambiguous, stop with
 the ticket still open and record only the non-secret failure evidence. Do not
 retry by sending into the production direct chat.
+
+## Join Failure: Autobase Closing
+
+Issue: `Plak/openclaw-keet-channel#16`
+
+The 2026-08-13 K-OC group join attempt did not fail on invite generation. The
+visible join paths did not create a new chat, and the local Keet logs showed the
+join-time failure:
+
+```text
+startPairingRoom
+_startPairing
+UNEXPECTED_ERROR: Autobase is closing
+```
+
+Treat this as a blocked pairing/runtime state, not as proof that the invite was
+invalid. Before any further live join attempt, collect only redacted evidence:
+
+```ts
+import { classifyJoinLog } from "@plak/openclaw-keet-channel/join-diagnostics";
+
+const diagnostic = classifyJoinLog(redactedLogText);
+```
+
+Expected blocked result:
+
+```json
+{
+  "status": "blocked",
+  "reason": "autobase-closing"
+}
+```
+
+If `chat-info` or UI readback shows `memberCount >= 2` and `You joined the
+group`, stop retrying the invite path and verify that the room is the intended
+target. Do not clean or reset the Keet profile without explicit approval. Do
+not persist invite links, QR payloads, recovery phrases or raw key material in
+Git, GitLab, logs or memory.
