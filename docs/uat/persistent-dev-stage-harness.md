@@ -68,6 +68,9 @@ Run Dev first. Stage follows only after Dev is green.
    - Reply with Keet's quote reply UI to an OpenClaw message in DM.
    - Reply with Keet's quote reply UI to an OpenClaw message in the group.
    - Verify bridge-poll emits the user-authored body, not the quoted parent.
+   - Verify native quote/reply structure: quoted parent message id, reply
+     message id, body text hash, quote text hash, target-room readback and
+     wrong-room absence. A plain message in the correct room is a failed UAT.
    - Verify OpenClaw processes that body and does not drop it as a `K OpenClaw`
      echo.
 8. Record message ids, receipt ids, route keys, session ids, processing status,
@@ -97,7 +100,10 @@ Post one redacted note per environment:
 - OpenClaw direct/group processing evidence: session id or route key,
   processing status and outbound reply receipt or explicit no-reply reason
 - quote reply processing evidence: quote/body extraction status, route
-  classification and processing result for both direct and group
+  classification and processing result for both direct and group. Evidence must
+  include native quote structure (`nativeQuoteReply.verified=true`), quoted
+  parent message id, reply message id, target-room readback, wrong-room absence
+  and redacted text hashes; a plain message in the right room must fail.
 - cleanup status
 - explicit statement that no production config, gateway restart or production
   Keet group was touched

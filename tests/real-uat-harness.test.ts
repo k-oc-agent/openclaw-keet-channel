@@ -6,6 +6,7 @@ import {
   assertSecretSafeEvidence,
   buildEvidenceSkeleton,
   loadPlan,
+  validateEvidence,
   validatePlan,
 } from "../scripts/keet-real-uat-harness.mjs";
 
@@ -57,5 +58,46 @@ describe("persistent Keet real UAT harness", () => {
     await writeFile(planPath, JSON.stringify(plan));
 
     await expect(loadPlan(planPath).then(validatePlan)).rejects.toThrow(/missing required UAT/i);
+  });
+
+  it("rejects quote-reply evidence that only proves a plain message reached the room", async () => {
+    const plan = await loadPlan("docs/uat/persistent-dev-stage-plan.json");
+    const evidence = buildEvidenceSkeleton(plan, "dev");
+    evidence.uats = evidence.uats.map((uat) => ({
+      ...uat,
+      status: "passed",
+      messageIds: [`${uat.id}-message`],
+      receiptIds: [`${uat.id}-receipt`],
+    }));
+
+    expect(() => validateEvidence(plan, evidence)).toThrow(/native quote reply structure/i);
+  });
+
+  it("accepts quote-reply evidence only with native quote structure and target-room proof", async () => {
+    const plan = await loadPlan("docs/uat/persistent-dev-stage-plan.json");
+    const evidence = buildEvidenceSkeleton(plan, "dev");
+    const proof = {
+      verified: true,
+      targetRoomVerified: true,
+      absentFromWrongRoom: true,
+      notPlainMessageOnly: true,
+      quotedParentMessageId: "message-parent",
+      replyMessageId: "message-reply",
+      bodyTextSha256: "a".repeat(64),
+      quoteTextSha256: "b".repeat(64),
+    };
+    evidence.uats = evidence.uats.map((uat) => ({
+      ...uat,
+      status: "passed",
+      messageIds: [`${uat.id}-message`],
+      receiptIds: [`${uat.id}-receipt`],
+      ...(uat.id.startsWith("quote-reply-") ? { nativeQuoteReply: proof } : {}),
+    }));
+
+    expect(validateEvidence(plan, evidence)).toMatchObject({
+      ok: true,
+      environment: "dev",
+      quoteReplyUats: ["quote-reply-direct", "quote-reply-group"],
+    });
   });
 });

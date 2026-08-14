@@ -123,16 +123,22 @@ production gate.
 
 - `UAT-DEV-QUOTE-001`: Dev B uses Keet quote reply in DM to quote a Dev A /
   OpenClaw message; bridge-poll emits the user-authored body separately from the
-  quoted parent block.
+  quoted parent block. Evidence must prove native quote/reply structure:
+  quoted parent message id, reply message id, body text hash, quote text hash,
+  target-room readback and wrong-room absence. A normal message in the correct
+  room is a failed UAT.
 - `UAT-DEV-QUOTE-002`: Dev B uses Keet quote reply in the Dev group; bridge-poll
   emits the user-authored body under the group route and does not route it as a
-  direct message.
+  direct message. Evidence must prove native quote/reply structure; a correct
+  room plus plain message is not enough.
 - `UAT-STAGE-QUOTE-001`: Stage B uses Keet quote reply in DM to quote a Stage A
   / OpenClaw message; bridge-poll emits the user-authored body separately from
-  the quoted parent block.
+  the quoted parent block. Evidence must prove native quote/reply structure;
+  a normal message in the correct room is a failed UAT.
 - `UAT-STAGE-QUOTE-002`: Stage B uses Keet quote reply in the Stage group;
   bridge-poll emits the user-authored body under the group route and does not
-  route it as a direct message.
+  route it as a direct message. Evidence must prove native quote/reply
+  structure; a correct room plus plain message is not enough.
 
 ### OpenClaw Processing UATs
 

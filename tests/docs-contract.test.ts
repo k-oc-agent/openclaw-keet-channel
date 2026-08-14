@@ -103,6 +103,8 @@ describe("documentation contract", () => {
     expect(harnessRunbook).toContain("OpenClaw processes the direct event");
     expect(harnessRunbook).toContain("Run quote reply processing");
     expect(harnessRunbook).toContain("Verify bridge-poll emits the user-authored body");
+    expect(harnessRunbook).toContain("A plain message in the correct room is a failed UAT");
+    expect(harnessRunbook).toContain("nativeQuoteReply.verified=true");
     expect(harnessRunbook).toContain("profile copy is rejected");
     expect(harnessRunbook).toContain("backup-file export is pending");
     expect(harnessPlan.environments.map((env: { name: string }) => env.name)).toEqual(["dev", "stage"]);

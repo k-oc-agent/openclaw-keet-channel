@@ -1,5 +1,13 @@
 # Release Notes and Rollback
 
+## 0.1.13 Scope
+
+- Fails `send --reply-to` closed if Keet Desktop did not actually select a
+  native reply target, so quote-reply requests cannot silently become normal
+  messages.
+- Requires quote-reply UAT evidence to prove native quote structure, target-room
+  readback and wrong-room absence before Dev/Stage gates can pass.
+
 ## 0.1.12 Scope
 
 - Fixes Keet Desktop native reply selection when the client exposes `Reply`

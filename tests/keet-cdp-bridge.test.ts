@@ -154,6 +154,15 @@ describe("Keet CDP bridge candidate", () => {
     expect(bridge.isReplyMenuItemLabel("Delete Message")).toBe(false);
   });
 
+  it("fails closed instead of sending a plain message when reply target selection fails", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(() => bridge.assertReplyTargetSelected("message-parent", false))
+      .toThrow("could not select native reply target message-parent");
+    expect(() => bridge.assertReplyTargetSelected("message-parent", true)).not.toThrow();
+    expect(() => bridge.assertReplyTargetSelected(undefined, false)).not.toThrow();
+  });
+
   it("applies the configured group sender allowlist before emitting inbound events", async () => {
     const bridge = await import(bridgeModuleUrl);
     const target = {

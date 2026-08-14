@@ -347,6 +347,14 @@ export function isReplyMenuItemLabel(text) {
   return String(text || "").trim() === "Reply";
 }
 
+export function assertReplyTargetSelected(replyToId, selectedReplyTarget) {
+  if (replyToId && !selectedReplyTarget) {
+    throw new Error(
+      `Keet CDP could not select native reply target ${replyToId}; refusing to send a normal message`,
+    );
+  }
+}
+
 async function maybeSelectReplyTarget(page, replyToId) {
   if (!replyToId) {
     return false;
@@ -399,6 +407,7 @@ async function maybeSelectReplyTarget(page, replyToId) {
 async function sendText(page, target, text, replyToId) {
   await verifyActiveRoom(page, target, "before reply selection");
   const selectedReplyTarget = await maybeSelectReplyTarget(page, replyToId);
+  assertReplyTargetSelected(replyToId, selectedReplyTarget);
   await verifyActiveRoom(page, target, "before composer");
   const editor = page.locator('[contenteditable="true"][role="textbox"]').last();
   await editor.click();

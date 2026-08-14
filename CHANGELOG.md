@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.13
+
+- Fail `send --reply-to` closed when Keet Desktop did not actually select a
+  native reply target, preventing a quote-reply request from silently becoming a
+  normal message.
+- Require Dev/Stage UAT evidence to prove native quote/reply structure,
+  target-room readback and wrong-room absence before quote-reply smokes can pass.
+
 ## 0.1.12
 
 - Select Keet native Reply from the message `...` menu when the desktop client
