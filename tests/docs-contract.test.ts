@@ -66,6 +66,7 @@ describe("documentation contract", () => {
   it("requires persistent Dev/Stage Keet test identities for real smokes", async () => {
     const spec = await readFile("docs/spec/mvp.md", "utf8");
     const readme = await readFile("README.md", "utf8");
+    const uat = await readFile("docs/uat/dev-stage-real-uat.md", "utf8");
 
     expect(spec).toContain("Dedicated Keet Test Identities");
     expect(spec).toMatch(/two persistent Keet test identities per\s+environment/);
@@ -74,6 +75,16 @@ describe("documentation contract", () => {
     expect(spec).toContain("recovery_phrase");
     expect(spec).toContain("Fake bridge proofs are a preflight");
     expect(readme).toContain("Real Dev/Stage smokes use dedicated persistent Keet test identities");
+    expect(readme).toContain("docs/uat/dev-stage-real-uat.md");
+    expect(uat).toContain("DM UATs");
+    expect(uat).toContain("Group Chat UATs");
+    expect(uat).toContain("Reply UATs");
+    expect(uat).toContain("Restart And Recovery UATs");
+    expect(uat).toContain("Negative And Security UATs");
+    expect(uat).toContain("Do not store recovery phrases");
+    expect(uat).toContain("production Keet groups remain out of scope");
+    expect(uat).toContain("UAT-DEV-GROUP-001");
+    expect(uat).toContain("UAT-STAGE-GROUP-001");
   });
 
   it("documents the ClawHub dogfood proof and keeps production gated", async () => {
