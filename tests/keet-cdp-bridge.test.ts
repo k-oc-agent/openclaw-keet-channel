@@ -233,6 +233,25 @@ describe("Keet CDP bridge candidate", () => {
       .toThrow("Keet CDP active room mismatch after send: expected Plak, active <none>");
   });
 
+  it("falls back to a target-room text match when Keet delays outgoing direction readback", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.findSentRow([
+      {
+        id: "m-old",
+        direction: "outgoing",
+        text: "older text",
+      },
+      {
+        id: "m-delayed",
+        direction: "incoming",
+        text: "K OpenClaw / prod 0.1.13 canary smoke 234852",
+      },
+    ], "K OpenClaw / prod 0.1.13 canary smoke 234852")).toMatchObject({
+      id: "m-delayed",
+    });
+  });
+
   it("declares the runtime command verbs needed by the bridge contract", async () => {
     const bridge = await import(bridgeModuleUrl);
 

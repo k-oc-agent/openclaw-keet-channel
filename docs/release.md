@@ -1,5 +1,13 @@
 # Release Notes and Rollback
 
+## 0.1.14 Scope
+
+- Fixes false `OutboundDeliveryError` results when Keet Desktop sends the
+  message but delays or omits the outgoing-direction marker during immediate
+  post-send readback.
+- Retries target-room DOM readback for a bounded window and accepts the sent
+  text only after the active room still matches the requested target.
+
 ## 0.1.13 Scope
 
 - Fails `send --reply-to` closed if Keet Desktop did not actually select a
