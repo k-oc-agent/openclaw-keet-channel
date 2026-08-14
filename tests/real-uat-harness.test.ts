@@ -5,9 +5,11 @@ import { describe, expect, it } from "vitest";
 import {
   assertSecretSafeEvidence,
   buildEvidenceSkeleton,
+  buildProdEvidenceSkeleton,
   loadPlan,
   validateEvidence,
   validatePlan,
+  validateProdEvidence,
 } from "../scripts/keet-real-uat-harness.mjs";
 
 describe("persistent Keet real UAT harness", () => {
@@ -17,6 +19,7 @@ describe("persistent Keet real UAT harness", () => {
 
     expect(summary.environments).toEqual(["dev", "stage"]);
     expect(summary.uatCount).toBeGreaterThanOrEqual(8);
+    expect(summary.productionSmokeCount).toBeGreaterThanOrEqual(2);
     expect(summary.openBaoPaths).toEqual([
       "kv/data/openclaw/keet/dev/test-a",
       "kv/data/openclaw/keet/dev/test-b",
@@ -31,6 +34,12 @@ describe("persistent Keet real UAT harness", () => {
       role: "a",
       openBaoPath: "kv/data/openclaw/keet/dev/test-a",
       recoveryPhraseLength: 24,
+    });
+    const processing = evidence.uats.find((uat) => uat.id === "openclaw-process-direct");
+    expect(processing?.openClawProcessing).toMatchObject({
+      freshInbound: false,
+      routeKind: "direct",
+      processedByOpenClaw: false,
     });
     expect(JSON.stringify(evidence)).not.toContain("recovery_phrase");
     expect(JSON.stringify(evidence)).not.toContain("backup_password");
@@ -73,10 +82,10 @@ describe("persistent Keet real UAT harness", () => {
     expect(() => validateEvidence(plan, evidence)).toThrow(/native quote reply structure/i);
   });
 
-  it("accepts quote-reply evidence only with native quote structure and target-room proof", async () => {
+  it("rejects processing evidence that only proves bridge-poll receipt", async () => {
     const plan = await loadPlan("docs/uat/persistent-dev-stage-plan.json");
     const evidence = buildEvidenceSkeleton(plan, "dev");
-    const proof = {
+    const quoteProof = {
       verified: true,
       targetRoomVerified: true,
       absentFromWrongRoom: true,
@@ -91,13 +100,155 @@ describe("persistent Keet real UAT harness", () => {
       status: "passed",
       messageIds: [`${uat.id}-message`],
       receiptIds: [`${uat.id}-receipt`],
+      ...(uat.id.startsWith("quote-reply-") ? { nativeQuoteReply: quoteProof } : {}),
+    }));
+
+    expect(() => validateEvidence(plan, evidence)).toThrow(/fresh inbound message/i);
+  });
+
+  it("rejects processing evidence with the wrong route or generic answer", async () => {
+    const plan = await loadPlan("docs/uat/persistent-dev-stage-plan.json");
+    const evidence = buildEvidenceSkeleton(plan, "dev");
+    const quoteProof = {
+      verified: true,
+      targetRoomVerified: true,
+      absentFromWrongRoom: true,
+      notPlainMessageOnly: true,
+      quotedParentMessageId: "message-parent",
+      replyMessageId: "message-reply",
+      bodyTextSha256: "a".repeat(64),
+      quoteTextSha256: "b".repeat(64),
+    };
+    const processingProof = {
+      freshInbound: true,
+      processedByOpenClaw: true,
+      routeKind: "direct",
+      routeKey: "keet:direct:kocdev1a",
+      sessionId: "session-id",
+      sessionKey: "",
+      inboundMessageId: "message-inbound",
+      processingStatus: "processed",
+      outboundReplyReceiptId: "receipt-reply",
+      replyMessageId: "message-reply",
+      targetRoomVerified: true,
+      absentFromWrongRoom: true,
+      answerMatchesPrompt: false,
+      responseTextSha256: "c".repeat(64),
+    };
+    evidence.uats = evidence.uats.map((uat) => ({
+      ...uat,
+      status: "passed",
+      messageIds: [`${uat.id}-message`],
+      receiptIds: [`${uat.id}-receipt`],
+      ...(uat.id.startsWith("quote-reply-") ? { nativeQuoteReply: quoteProof } : {}),
+      ...(uat.id.startsWith("openclaw-process-") ? { openClawProcessing: processingProof } : {}),
+    }));
+
+    expect(() => validateEvidence(plan, evidence)).toThrow(/answer matches the prompt/i);
+  });
+
+  it("accepts quote-reply evidence only with native quote structure and target-room proof", async () => {
+    const plan = await loadPlan("docs/uat/persistent-dev-stage-plan.json");
+    const evidence = buildEvidenceSkeleton(plan, "dev");
+    const proof = {
+      verified: true,
+      targetRoomVerified: true,
+      absentFromWrongRoom: true,
+      notPlainMessageOnly: true,
+      quotedParentMessageId: "message-parent",
+      replyMessageId: "message-reply",
+      bodyTextSha256: "a".repeat(64),
+      quoteTextSha256: "b".repeat(64),
+    };
+    const processingProof = {
+      freshInbound: true,
+      processedByOpenClaw: true,
+      routeKind: "direct",
+      routeKey: "keet:direct:kocdev1a",
+      sessionId: "session-id",
+      sessionKey: "",
+      inboundMessageId: "message-inbound",
+      processingStatus: "processed",
+      outboundReplyReceiptId: "receipt-reply",
+      replyMessageId: "message-reply",
+      targetRoomVerified: true,
+      absentFromWrongRoom: true,
+      answerMatchesPrompt: true,
+      responseTextSha256: "c".repeat(64),
+    };
+    evidence.uats = evidence.uats.map((uat) => ({
+      ...uat,
+      status: "passed",
+      messageIds: [`${uat.id}-message`],
+      receiptIds: [`${uat.id}-receipt`],
       ...(uat.id.startsWith("quote-reply-") ? { nativeQuoteReply: proof } : {}),
+      ...(uat.id === "openclaw-process-direct"
+        ? { openClawProcessing: processingProof }
+        : {}),
+      ...(uat.id === "openclaw-process-native-reply-direct"
+        ? { openClawProcessing: processingProof }
+        : {}),
+      ...(uat.id === "openclaw-process-group"
+        ? { openClawProcessing: { ...processingProof, routeKind: "group", routeKey: "keet:group:K OC Keet Dev UAT" } }
+        : {}),
     }));
 
     expect(validateEvidence(plan, evidence)).toMatchObject({
       ok: true,
       environment: "dev",
       quoteReplyUats: ["quote-reply-direct", "quote-reply-group"],
+      processingUats: [
+        "openclaw-process-direct",
+        "openclaw-process-native-reply-direct",
+        "openclaw-process-group",
+      ],
+    });
+  });
+
+  it("requires fresh DM and Canary processing proof for production smoke evidence", async () => {
+    const plan = await loadPlan("docs/uat/persistent-dev-stage-plan.json");
+    const evidence = buildProdEvidenceSkeleton(plan);
+    evidence.requiredSmokes = evidence.requiredSmokes.map((smoke) => ({
+      ...smoke,
+      status: "passed",
+      messageIds: [`${smoke.id}-message`],
+      receiptIds: [`${smoke.id}-receipt`],
+    }));
+
+    expect(() => validateProdEvidence(plan, evidence)).toThrow(/fresh inbound message/i);
+
+    const processingProof = {
+      freshInbound: true,
+      processedByOpenClaw: true,
+      routeKind: "direct",
+      routeKey: "keet:direct:plak0815",
+      sessionId: "session-id",
+      sessionKey: "",
+      inboundMessageId: "message-inbound",
+      processingStatus: "processed",
+      outboundReplyReceiptId: "receipt-reply",
+      replyMessageId: "message-reply",
+      targetRoomVerified: true,
+      absentFromWrongRoom: true,
+      answerMatchesPrompt: true,
+      responseTextSha256: "d".repeat(64),
+    };
+    evidence.requiredSmokes = evidence.requiredSmokes.map((smoke) => ({
+      ...smoke,
+      ...(smoke.id === "prod-fresh-dm-inbound-process"
+        ? { openClawProcessing: processingProof }
+        : {}),
+      ...(smoke.id === "prod-fresh-canary-inbound-process"
+        ? { openClawProcessing: { ...processingProof, routeKind: "group", routeKey: "keet:group:K OC Keet Canary 2026-08-11" } }
+        : {}),
+    }));
+
+    expect(validateProdEvidence(plan, evidence)).toMatchObject({
+      ok: true,
+      processingSmokes: [
+        "prod-fresh-dm-inbound-process",
+        "prod-fresh-canary-inbound-process",
+      ],
     });
   });
 });

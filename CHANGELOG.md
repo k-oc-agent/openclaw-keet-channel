@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.15
+
+- Require fresh DM and Canary production processing smokes before a prod gate can
+  be called green: inbound message id, route/session proof, visible reply
+  receipt, target-room readback, wrong-room absence and response hash.
+- Fail UAT evidence when OpenClaw processing is only proven by bridge-poll,
+  parser readback or a generic/wrong-scope response.
+
 ## 0.1.14
 
 - Retry Keet Desktop post-send DOM readback and accept a target-room text match

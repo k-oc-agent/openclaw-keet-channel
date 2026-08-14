@@ -103,6 +103,10 @@ describe("documentation contract", () => {
     expect(harnessRunbook).toContain("OpenClaw processes the direct event");
     expect(harnessRunbook).toContain("Run quote reply processing");
     expect(harnessRunbook).toContain("Verify bridge-poll emits the user-authored body");
+    expect(harnessRunbook).toContain("fresh inbound ids");
+    expect(harnessRunbook).toMatch(/Bridge-poll\s+receipt alone is not enough/);
+    expect(harnessRunbook).toContain("prod-evidence-skeleton");
+    expect(harnessRunbook).toContain("fresh Canary inbound processing");
     expect(harnessRunbook).toContain("A plain message in the correct room is a failed UAT");
     expect(harnessRunbook).toContain("nativeQuoteReply.verified=true");
     expect(harnessRunbook).toContain("profile copy is rejected");
@@ -125,6 +129,13 @@ describe("documentation contract", () => {
         "openclaw-process-group",
       ]));
     }
+    expect(harnessPlan.productionGate.requiredSmokes).toEqual(expect.arrayContaining([
+      "prod-fresh-dm-inbound-process",
+      "prod-fresh-canary-inbound-process",
+      "prod-native-quote-reply-dm-inbound",
+      "prod-native-quote-reply-group",
+      "prod-canary-normal-outbound",
+    ]));
   });
 
   it("documents the ClawHub dogfood proof and keeps production gated", async () => {
