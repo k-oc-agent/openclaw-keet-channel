@@ -16,6 +16,7 @@ const REQUIRED_UATS = [
   "openclaw-process-native-reply-direct",
   "openclaw-process-group",
 ];
+const QUOTE_REPLY_UATS = ["quote-reply-direct", "quote-reply-group"];
 const SECRET_KEY_PATTERNS = [
   /backup[_-]?password/i,
   /recovery[_-]?phrase$/i,
@@ -78,6 +79,20 @@ export async function loadPlan(planPath = DEFAULT_PLAN) {
 function requireString(value, message) {
   const trimmed = readString(value);
   if (!trimmed) {
+    throw new Error(message);
+  }
+  return trimmed;
+}
+
+function requireBooleanTrue(value, message) {
+  if (value !== true) {
+    throw new Error(message);
+  }
+}
+
+function requireSha256(value, message) {
+  const trimmed = requireString(value, message);
+  if (!/^[a-f0-9]{64}$/i.test(trimmed)) {
     throw new Error(message);
   }
   return trimmed;
@@ -174,7 +189,26 @@ export function buildEvidenceSkeleton(plan, environmentName) {
       profilePath: account.profilePath,
       recoveryPhraseLength: account.recoveryPhraseLength,
     })),
-    uats: env.uats.map((id) => ({ id, status: "pending", messageIds: [], receiptIds: [] })),
+    uats: env.uats.map((id) => ({
+      id,
+      status: "pending",
+      messageIds: [],
+      receiptIds: [],
+      ...(QUOTE_REPLY_UATS.includes(id)
+        ? {
+          nativeQuoteReply: {
+            verified: false,
+            targetRoomVerified: false,
+            absentFromWrongRoom: false,
+            notPlainMessageOnly: false,
+            quotedParentMessageId: "",
+            replyMessageId: "",
+            bodyTextSha256: "",
+            quoteTextSha256: "",
+          },
+        }
+        : {}),
+    })),
     cleanup: {
       stopKeetProcesses: "required",
       noCdpProcessesLeftRunning: "required",
@@ -184,9 +218,82 @@ export function buildEvidenceSkeleton(plan, environmentName) {
   return evidence;
 }
 
+function findEnvironment(plan, name) {
+  const env = plan.environments.find((candidate) => candidate.name === name);
+  if (!env) {
+    throw new Error(`unknown evidence environment ${name}`);
+  }
+  return env;
+}
+
+function validateQuoteReplyProof(uat, environmentName) {
+  const proof = uat.nativeQuoteReply && typeof uat.nativeQuoteReply === "object"
+    ? uat.nativeQuoteReply
+    : undefined;
+  if (!proof) {
+    throw new Error(`environment ${environmentName} ${uat.id} missing native quote reply proof`);
+  }
+  requireBooleanTrue(
+    proof.verified,
+    `environment ${environmentName} ${uat.id} must verify native quote reply structure`,
+  );
+  requireBooleanTrue(
+    proof.targetRoomVerified,
+    `environment ${environmentName} ${uat.id} must verify the target room read-only`,
+  );
+  requireBooleanTrue(
+    proof.absentFromWrongRoom,
+    `environment ${environmentName} ${uat.id} must verify absence from the wrong room`,
+  );
+  requireBooleanTrue(
+    proof.notPlainMessageOnly,
+    `environment ${environmentName} ${uat.id} must prove the send is not a plain message only`,
+  );
+  requireString(
+    proof.quotedParentMessageId,
+    `environment ${environmentName} ${uat.id} missing quoted parent message id`,
+  );
+  requireString(proof.replyMessageId, `environment ${environmentName} ${uat.id} missing reply message id`);
+  requireSha256(proof.bodyTextSha256, `environment ${environmentName} ${uat.id} missing body text sha256`);
+  requireSha256(proof.quoteTextSha256, `environment ${environmentName} ${uat.id} missing quote text sha256`);
+}
+
+export function validateEvidence(plan, evidence) {
+  assertSecretSafeEvidence(evidence);
+  if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) {
+    throw new Error("evidence must be an object");
+  }
+  if (evidence.kind !== "keet-real-uat-evidence") {
+    throw new Error("evidence kind must be keet-real-uat-evidence");
+  }
+  const env = findEnvironment(plan, requireString(evidence.environment, "evidence missing environment"));
+  if (!Array.isArray(evidence.uats)) {
+    throw new Error(`environment ${env.name} evidence must include UAT results`);
+  }
+  const byId = new Map(evidence.uats.map((uat) => [uat?.id, uat]));
+  for (const required of env.uats) {
+    const uat = byId.get(required);
+    if (!uat) {
+      throw new Error(`environment ${env.name} missing evidence for UAT ${required}`);
+    }
+    if (uat.status !== "passed") {
+      throw new Error(`environment ${env.name} UAT ${required} must be passed before gate`);
+    }
+    if (QUOTE_REPLY_UATS.includes(required)) {
+      validateQuoteReplyProof(uat, env.name);
+    }
+  }
+  return {
+    ok: true,
+    environment: env.name,
+    uatCount: env.uats.length,
+    quoteReplyUats: QUOTE_REPLY_UATS,
+  };
+}
+
 function parseCli(argv) {
   const [action = "validate", ...rest] = argv;
-  const params = { action, plan: DEFAULT_PLAN, environment: undefined };
+  const params = { action, plan: DEFAULT_PLAN, environment: undefined, evidence: undefined };
   for (let i = 0; i < rest.length; i += 2) {
     const key = rest[i];
     const value = rest[i + 1];
@@ -197,6 +304,8 @@ function parseCli(argv) {
       params.plan = value;
     } else if (key === "--environment") {
       params.environment = value;
+    } else if (key === "--evidence") {
+      params.evidence = value;
     } else {
       throw new Error(`unsupported option ${key}`);
     }
@@ -216,6 +325,12 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         throw new Error("evidence-skeleton requires --environment");
       }
       process.stdout.write(`${JSON.stringify(buildEvidenceSkeleton(plan, params.environment), null, 2)}\n`);
+    } else if (params.action === "validate-evidence") {
+      if (!params.evidence) {
+        throw new Error("validate-evidence requires --evidence");
+      }
+      const evidence = JSON.parse(await readFile(params.evidence, "utf8"));
+      process.stdout.write(`${JSON.stringify(validateEvidence(plan, evidence), null, 2)}\n`);
     } else {
       throw new Error(`unsupported action ${params.action}`);
     }
