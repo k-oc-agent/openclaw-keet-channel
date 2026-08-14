@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.11
+
+- Read the actual body from native Keet reply rows instead of the quoted parent
+  message, so replies quoting `K OpenClaw` are no longer dropped as echoes.
+- Preserve the existing OpenClaw echo filter for rows that contain only an
+  OpenClaw quote/echo and no user-authored body.
+
 ## 0.1.10
 
 - Fail Keet Desktop CDP sends closed when the selected sidebar room no longer

@@ -1,5 +1,12 @@
 # Release Notes and Rollback
 
+## 0.1.11 Scope
+
+- Fixes inbound parsing for Keet native replies where the first
+  `.chat-message__text` belongs to the quoted parent message.
+- Emits the user-authored reply body while keeping pure `K OpenClaw` echo rows
+  filtered out.
+
 ## 0.1.10 Scope
 
 - Hardens the Keet Desktop CDP bridge send path after a production smoke found
