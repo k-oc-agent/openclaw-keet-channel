@@ -2,6 +2,8 @@
 
 Issue: `Plak/openclaw-keet-channel#17`
 
+Harness issue: `Plak/openclaw-keet-channel#19`
+
 ## Purpose
 
 This matrix defines the reusable UAT gate for real Keet Dev/Stage testing. It
@@ -13,6 +15,14 @@ Fake bridge checks remain useful preflight tests for package and gateway
 contracts. They do not replace these real Keet UATs when a release changes
 inbound, reply, room selection, cursor, dedupe, group routing or recovery
 behavior.
+
+The repeatable Dev/Stage harness is documented in
+`docs/uat/persistent-dev-stage-harness.md`. Validate the repo-owned plan before
+host-side UATs:
+
+```bash
+node scripts/keet-real-uat-harness.mjs validate
+```
 
 ## Test Identities
 

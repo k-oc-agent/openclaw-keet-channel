@@ -35,7 +35,9 @@ describe("package metadata", () => {
       "LICENSE",
       "docs/bridge-cli-contract.md",
       "docs/release.md",
+      "docs/uat",
       "scripts/keet-cdp-bridge.mjs",
+      "scripts/keet-real-uat-harness.mjs",
     ]));
     expect(packageJson.files).not.toContain("docs");
     expect(packageJson.files).not.toContain("docs/proofs");

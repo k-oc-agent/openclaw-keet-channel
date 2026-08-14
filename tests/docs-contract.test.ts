@@ -67,6 +67,8 @@ describe("documentation contract", () => {
     const spec = await readFile("docs/spec/mvp.md", "utf8");
     const readme = await readFile("README.md", "utf8");
     const uat = await readFile("docs/uat/dev-stage-real-uat.md", "utf8");
+    const harnessRunbook = await readFile("docs/uat/persistent-dev-stage-harness.md", "utf8");
+    const harnessPlan = JSON.parse(await readFile("docs/uat/persistent-dev-stage-plan.json", "utf8"));
 
     expect(spec).toContain("Dedicated Keet Test Identities");
     expect(spec).toMatch(/two persistent Keet test identities per\s+environment/);
@@ -85,6 +87,21 @@ describe("documentation contract", () => {
     expect(uat).toContain("production Keet groups remain out of scope");
     expect(uat).toContain("UAT-DEV-GROUP-001");
     expect(uat).toContain("UAT-STAGE-GROUP-001");
+    expect(uat).toContain("scripts/keet-real-uat-harness.mjs validate");
+    expect(readme).toContain("docs/uat/persistent-dev-stage-harness.md");
+    expect(harnessRunbook).toContain("Plak/openclaw-keet-channel#19");
+    expect(harnessRunbook).toContain("scripts/keet-real-uat-harness.mjs validate");
+    expect(harnessRunbook).toContain("No Secret Evidence Guard");
+    expect(harnessRunbook).toContain("DM A<->B");
+    expect(harnessRunbook).toContain("Group A<->B");
+    expect(harnessRunbook).toContain("profile copy is rejected");
+    expect(harnessRunbook).toContain("backup-file export is pending");
+    expect(harnessPlan.environments.map((env: { name: string }) => env.name)).toEqual(["dev", "stage"]);
+    for (const env of harnessPlan.environments) {
+      expect(env.host).toMatch(/^k-(dev|stage)$/);
+      expect(env.accounts).toHaveLength(2);
+      expect(env.uats).toEqual(expect.arrayContaining(["dm-a-to-b", "dm-b-to-a", "group-a-to-b", "group-b-to-a"]));
+    }
   });
 
   it("documents the ClawHub dogfood proof and keeps production gated", async () => {
