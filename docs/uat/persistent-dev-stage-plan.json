@@ -2,6 +2,16 @@
   "issue": "Plak/openclaw-keet-channel#19",
   "sourceIssue": "Plak/openclaw-keet-channel#17",
   "evidencePolicy": "redacted-only",
+  "productionGate": {
+    "issue": "Plak/openclaw-keet-channel#27",
+    "requiredSmokes": [
+      "prod-fresh-dm-inbound-process",
+      "prod-fresh-canary-inbound-process",
+      "prod-native-quote-reply-dm-inbound",
+      "prod-native-quote-reply-group",
+      "prod-canary-normal-outbound"
+    ]
+  },
   "environments": [
     {
       "name": "dev",

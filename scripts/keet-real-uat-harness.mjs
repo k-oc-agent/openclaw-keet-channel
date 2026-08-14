@@ -17,6 +17,29 @@ const REQUIRED_UATS = [
   "openclaw-process-group",
 ];
 const QUOTE_REPLY_UATS = ["quote-reply-direct", "quote-reply-group"];
+const PROCESSING_UATS = [
+  "openclaw-process-direct",
+  "openclaw-process-native-reply-direct",
+  "openclaw-process-group",
+];
+const PROCESSING_EXPECTATIONS = {
+  "openclaw-process-direct": "direct",
+  "openclaw-process-native-reply-direct": "direct",
+  "openclaw-process-group": "group",
+  "prod-fresh-dm-inbound-process": "direct",
+  "prod-fresh-canary-inbound-process": "group",
+};
+const REQUIRED_PROD_SMOKES = [
+  "prod-fresh-dm-inbound-process",
+  "prod-fresh-canary-inbound-process",
+  "prod-native-quote-reply-dm-inbound",
+  "prod-native-quote-reply-group",
+  "prod-canary-normal-outbound",
+];
+const PROD_PROCESSING_SMOKES = [
+  "prod-fresh-dm-inbound-process",
+  "prod-fresh-canary-inbound-process",
+];
 const SECRET_KEY_PATTERNS = [
   /backup[_-]?password/i,
   /recovery[_-]?phrase$/i,
@@ -159,11 +182,23 @@ export function validatePlan(plan) {
     throw new Error("plan environments must be ordered dev,stage");
   }
   plan.environments.forEach(validateEnvironment);
+  if (!plan.productionGate || typeof plan.productionGate !== "object") {
+    throw new Error("plan must define productionGate");
+  }
+  if (!Array.isArray(plan.productionGate.requiredSmokes)) {
+    throw new Error("plan productionGate must define requiredSmokes");
+  }
+  for (const required of REQUIRED_PROD_SMOKES) {
+    if (!plan.productionGate.requiredSmokes.includes(required)) {
+      throw new Error(`plan productionGate missing required smoke ${required}`);
+    }
+  }
   assertSecretSafeEvidence(plan);
   return {
     ok: true,
     environments: names,
     uatCount: plan.environments.reduce((count, env) => count + env.uats.length, 0),
+    productionSmokeCount: plan.productionGate.requiredSmokes.length,
     openBaoPaths: plan.environments.flatMap((env) => env.accounts.map((account) => account.openBaoPath)),
     planSha256: sha256(JSON.stringify(plan)),
   };
@@ -208,10 +243,71 @@ export function buildEvidenceSkeleton(plan, environmentName) {
           },
         }
         : {}),
+      ...(PROCESSING_UATS.includes(id)
+        ? {
+          openClawProcessing: {
+            freshInbound: false,
+            processedByOpenClaw: false,
+            routeKind: PROCESSING_EXPECTATIONS[id],
+            routeKey: "",
+            sessionId: "",
+            sessionKey: "",
+            inboundMessageId: "",
+            processingStatus: "",
+            outboundReplyReceiptId: "",
+            replyMessageId: "",
+            targetRoomVerified: false,
+            absentFromWrongRoom: false,
+            answerMatchesPrompt: false,
+            responseTextSha256: "",
+          },
+        }
+        : {}),
     })),
     cleanup: {
       stopKeetProcesses: "required",
       noCdpProcessesLeftRunning: "required",
+    },
+  };
+  assertSecretSafeEvidence(evidence);
+  return evidence;
+}
+
+export function buildProdEvidenceSkeleton(plan) {
+  const evidence = {
+    kind: "keet-prod-smoke-evidence",
+    issue: plan.issue,
+    productionGate: plan.productionGate.issue,
+    requiredSmokes: plan.productionGate.requiredSmokes.map((id) => ({
+      id,
+      status: "pending",
+      messageIds: [],
+      receiptIds: [],
+      ...(PROD_PROCESSING_SMOKES.includes(id)
+        ? {
+          openClawProcessing: {
+            freshInbound: false,
+            processedByOpenClaw: false,
+            routeKind: PROCESSING_EXPECTATIONS[id],
+            routeKey: "",
+            sessionId: "",
+            sessionKey: "",
+            inboundMessageId: "",
+            processingStatus: "",
+            outboundReplyReceiptId: "",
+            replyMessageId: "",
+            targetRoomVerified: false,
+            absentFromWrongRoom: false,
+            answerMatchesPrompt: false,
+            responseTextSha256: "",
+          },
+        }
+        : {}),
+    })),
+    postRestartReadback: {
+      gatewayHealthy: false,
+      pluginVersion: "",
+      channelHealthy: false,
     },
   };
   assertSecretSafeEvidence(evidence);
@@ -258,6 +354,35 @@ function validateQuoteReplyProof(uat, environmentName) {
   requireSha256(proof.quoteTextSha256, `environment ${environmentName} ${uat.id} missing quote text sha256`);
 }
 
+function validateProcessingProof(uat, contextName) {
+  const proof = uat.openClawProcessing && typeof uat.openClawProcessing === "object"
+    ? uat.openClawProcessing
+    : undefined;
+  if (!proof) {
+    throw new Error(`${contextName} ${uat.id} missing OpenClaw processing proof`);
+  }
+  const expectedRouteKind = PROCESSING_EXPECTATIONS[uat.id];
+  if (expectedRouteKind && proof.routeKind !== expectedRouteKind) {
+    throw new Error(`${contextName} ${uat.id} must prove ${expectedRouteKind} route processing`);
+  }
+  requireBooleanTrue(proof.freshInbound, `${contextName} ${uat.id} must use a fresh inbound message`);
+  requireBooleanTrue(proof.processedByOpenClaw, `${contextName} ${uat.id} must prove OpenClaw processed the event`);
+  requireString(proof.routeKey, `${contextName} ${uat.id} missing route key`);
+  if (!readString(proof.sessionId) && !readString(proof.sessionKey)) {
+    throw new Error(`${contextName} ${uat.id} missing session id or session key`);
+  }
+  requireString(proof.inboundMessageId, `${contextName} ${uat.id} missing inbound message id`);
+  if (proof.processingStatus !== "processed") {
+    throw new Error(`${contextName} ${uat.id} processing status must be processed`);
+  }
+  requireString(proof.outboundReplyReceiptId, `${contextName} ${uat.id} missing outbound reply receipt id`);
+  requireString(proof.replyMessageId, `${contextName} ${uat.id} missing reply message id`);
+  requireBooleanTrue(proof.targetRoomVerified, `${contextName} ${uat.id} must verify reply target room`);
+  requireBooleanTrue(proof.absentFromWrongRoom, `${contextName} ${uat.id} must verify wrong-room absence`);
+  requireBooleanTrue(proof.answerMatchesPrompt, `${contextName} ${uat.id} must prove the answer matches the prompt`);
+  requireSha256(proof.responseTextSha256, `${contextName} ${uat.id} missing response text sha256`);
+}
+
 export function validateEvidence(plan, evidence) {
   assertSecretSafeEvidence(evidence);
   if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) {
@@ -282,12 +407,47 @@ export function validateEvidence(plan, evidence) {
     if (QUOTE_REPLY_UATS.includes(required)) {
       validateQuoteReplyProof(uat, env.name);
     }
+    if (PROCESSING_UATS.includes(required)) {
+      validateProcessingProof(uat, `environment ${env.name}`);
+    }
   }
   return {
     ok: true,
     environment: env.name,
     uatCount: env.uats.length,
     quoteReplyUats: QUOTE_REPLY_UATS,
+    processingUats: PROCESSING_UATS,
+  };
+}
+
+export function validateProdEvidence(plan, evidence) {
+  assertSecretSafeEvidence(evidence);
+  if (!evidence || typeof evidence !== "object" || Array.isArray(evidence)) {
+    throw new Error("production evidence must be an object");
+  }
+  if (evidence.kind !== "keet-prod-smoke-evidence") {
+    throw new Error("production evidence kind must be keet-prod-smoke-evidence");
+  }
+  if (!Array.isArray(evidence.requiredSmokes)) {
+    throw new Error("production evidence must include required smoke results");
+  }
+  const byId = new Map(evidence.requiredSmokes.map((smoke) => [smoke?.id, smoke]));
+  for (const required of plan.productionGate.requiredSmokes) {
+    const smoke = byId.get(required);
+    if (!smoke) {
+      throw new Error(`production evidence missing smoke ${required}`);
+    }
+    if (smoke.status !== "passed") {
+      throw new Error(`production smoke ${required} must be passed before gate`);
+    }
+    if (PROD_PROCESSING_SMOKES.includes(required)) {
+      validateProcessingProof(smoke, "production");
+    }
+  }
+  return {
+    ok: true,
+    productionSmokeCount: plan.productionGate.requiredSmokes.length,
+    processingSmokes: PROD_PROCESSING_SMOKES,
   };
 }
 
@@ -325,12 +485,20 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         throw new Error("evidence-skeleton requires --environment");
       }
       process.stdout.write(`${JSON.stringify(buildEvidenceSkeleton(plan, params.environment), null, 2)}\n`);
+    } else if (params.action === "prod-evidence-skeleton") {
+      process.stdout.write(`${JSON.stringify(buildProdEvidenceSkeleton(plan), null, 2)}\n`);
     } else if (params.action === "validate-evidence") {
       if (!params.evidence) {
         throw new Error("validate-evidence requires --evidence");
       }
       const evidence = JSON.parse(await readFile(params.evidence, "utf8"));
       process.stdout.write(`${JSON.stringify(validateEvidence(plan, evidence), null, 2)}\n`);
+    } else if (params.action === "validate-prod-evidence") {
+      if (!params.evidence) {
+        throw new Error("validate-prod-evidence requires --evidence");
+      }
+      const evidence = JSON.parse(await readFile(params.evidence, "utf8"));
+      process.stdout.write(`${JSON.stringify(validateProdEvidence(plan, evidence), null, 2)}\n`);
     } else {
       throw new Error(`unsupported action ${params.action}`);
     }

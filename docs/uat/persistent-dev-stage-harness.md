@@ -15,6 +15,7 @@ Run the repository guard before and after any host-side UAT:
 node scripts/keet-real-uat-harness.mjs validate
 node scripts/keet-real-uat-harness.mjs evidence-skeleton --environment dev
 node scripts/keet-real-uat-harness.mjs evidence-skeleton --environment stage
+node scripts/keet-real-uat-harness.mjs prod-evidence-skeleton
 ```
 
 The guard fails closed when a plan or evidence skeleton contains recovery
@@ -74,7 +75,8 @@ Run Dev first. Stage follows only after Dev is green.
    - Verify OpenClaw processes that body and does not drop it as a `K OpenClaw`
      echo.
 8. Record message ids, receipt ids, route keys, session ids, processing status,
-   text lengths and hashes only.
+   fresh inbound ids, reply target-room readback, wrong-room absence, text
+   lengths and hashes only.
 9. Stop the two test Keet processes and verify no CDP test process remains.
 
 ## Known Keet Constraints
@@ -98,7 +100,11 @@ Post one redacted note per environment:
 - Group A<->B message ids or receipts
 - bridge-poll direct and group route evidence
 - OpenClaw direct/group processing evidence: session id or route key,
-  processing status and outbound reply receipt or explicit no-reply reason
+  processing status and outbound reply receipt. Processing evidence must prove a
+  fresh inbound message, direct/group route kind, route key, session id or
+  session key, visible reply receipt/message id, target-room readback,
+  wrong-room absence and a response hash that matches the prompt. Bridge-poll
+  receipt alone is not enough.
 - quote reply processing evidence: quote/body extraction status, route
   classification and processing result for both direct and group. Evidence must
   include native quote structure (`nativeQuoteReply.verified=true`), quoted
@@ -113,3 +119,11 @@ Post one redacted note per environment:
 This harness is a Dev/Stage gate only. A production plugin install, production
 gateway restart, production Canary smoke or Plak personal DM smoke requires a
 separate explicit production gate after this harness is green.
+
+Production gates must validate the same proof shape with
+`scripts/keet-real-uat-harness.mjs prod-evidence-skeleton` and
+`validate-prod-evidence`. The minimum production smokes are fresh DM inbound
+processing, fresh Canary inbound processing, native quote-reply DM inbound,
+native quote-reply group and normal Canary outbound. Do not call a production
+gate green from parser-only DM proof, bridge-poll-only group proof or a
+generic/wrong-scope OpenClaw answer.

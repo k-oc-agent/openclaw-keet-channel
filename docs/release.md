@@ -1,5 +1,16 @@
 # Release Notes and Rollback
 
+## 0.1.15 Scope
+
+- Tightens the release/UAT contract after production dogfood showed that DM and
+  Canary processing smokes were not fresh enough.
+- A production gate now needs fresh DM inbound processing and fresh Canary
+  inbound processing evidence before success can be claimed: inbound id,
+  direct/group route, session id or key, visible reply receipt, target-room
+  readback, wrong-room absence and response hash.
+- Parser-only DM proof, bridge-poll-only group proof and generic/wrong-scope
+  OpenClaw answers are failed smoke evidence.
+
 ## 0.1.14 Scope
 
 - Fixes false `OutboundDeliveryError` results when Keet Desktop sends the

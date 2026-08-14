@@ -75,6 +75,9 @@ For each UAT, record only redacted evidence:
 - health/readback status before and after the test
 - OpenClaw session id or route key, processing status and outbound reply
   receipt when the UAT expects an agent response
+- for processing smokes: fresh inbound message id, route kind, route key,
+  session id or session key, target-room readback for the reply, wrong-room
+  absence and a response hash that matches the test prompt
 - rollback path and cleanup status
 
 Production OpenClaw config, production Keet profiles, Plak's personal Keet DM
@@ -144,22 +147,50 @@ production gate.
 
 - `UAT-DEV-PROC-001`: A Dev direct inbound event is accepted by OpenClaw,
   creates or updates the expected direct session and produces a Keet outbound
-  reply receipt in the same DM target.
+  reply receipt in the same DM target. Evidence must use a fresh inbound
+  message and prove the reply was visible in the same DM target, not only that
+  bridge-poll emitted the inbound row.
 - `UAT-DEV-PROC-002`: A Dev native Keet reply inbound event is accepted by
   OpenClaw using the non-quoted quote-reply body; a quoted `K OpenClaw` parent
   must not cause the user body to be dropped as an echo.
 - `UAT-DEV-PROC-003`: A Dev group inbound event is accepted by OpenClaw,
   creates or updates the expected group session and produces a reply only in the
-  configured group target.
+  configured group target. Evidence must prove the group route and a visible
+  group reply; a direct-session or generic/wrong-scope answer is failed.
 - `UAT-STAGE-PROC-001`: A Stage direct inbound event is accepted by OpenClaw,
   creates or updates the expected direct session and produces a Keet outbound
-  reply receipt in the same DM target.
+  reply receipt in the same DM target. Evidence must use a fresh inbound
+  message and prove the reply was visible in the same DM target, not only that
+  bridge-poll emitted the inbound row.
 - `UAT-STAGE-PROC-002`: A Stage native Keet reply inbound event is accepted by
   OpenClaw using the non-quoted quote-reply body; a quoted `K OpenClaw` parent
   must not cause the user body to be dropped as an echo.
 - `UAT-STAGE-PROC-003`: A Stage group inbound event is accepted by OpenClaw,
   creates or updates the expected group session and produces a reply only in the
-  configured group target.
+  configured group target. Evidence must prove the group route and a visible
+  group reply; a direct-session or generic/wrong-scope answer is failed.
+
+### Production Smoke Contract
+
+Production gates are separate from Dev/Stage UATs, but they inherit the same
+evidence strictness. A production install/restart is not complete until these
+fresh smokes pass:
+
+- `prod-fresh-dm-inbound-process`: Plak sends a new Keet DM prompt; OpenClaw
+  creates or updates the direct Keet session, answers that prompt, and the reply
+  is read-only verified in Plak DM and absent from Canary.
+- `prod-fresh-canary-inbound-process`: Plak sends a new Canary prompt; OpenClaw
+  creates or updates the configured Canary group route, answers that prompt, and
+  the reply is read-only verified in Canary and absent from Plak DM.
+- `prod-native-quote-reply-dm-inbound`: a native Keet DM quote reply is parsed
+  from the user-authored body, not the quoted parent.
+- `prod-native-quote-reply-group`: a native Keet group quote reply proves native
+  quote structure, parent/reply ids, target room and wrong-room absence.
+- `prod-canary-normal-outbound`: a normal Canary outbound message returns
+  `latestOutgoing` from the verified target room.
+
+Parser-only DM proof, bridge-poll-only group proof, and any generic answer that
+does not match the fresh prompt are failed production smoke evidence.
 
 ### Group Chat UATs
 
