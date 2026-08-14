@@ -40,18 +40,22 @@ on Dev/Stage without touching production Keet groups.
 
 ## Dev/Stage Coordination
 
-- Dev is the disposable install/prototype target.
-- Stage must use a dedicated Keet test chat and fake/throwaway bridge state
-  until Plak explicitly approves a real group target.
+- Dev is the disposable OpenClaw install/prototype target; the Keet test
+  identities used for real smokes are persistent.
+- Stage must use a dedicated Keet test chat and isolated bridge state until
+  Plak explicitly approves a real group target.
 - Any Stage smoke must record host identity, config path, plugin package hash,
   target chat id/name, and proof that production Keet groups were not used.
 
 ## Dedicated Keet Test Identities
 
-Real Dev/Stage smokes should use two throwaway Keet identities, not Plak's
-personal account and not the production K OpenClaw identity. Each identity must
-have an isolated Keet profile, a clearly non-production display name, and
-allowlisted direct/group test targets only.
+Real Dev/Stage smokes should use two persistent Keet test identities per
+environment, not Plak's personal account and not the production K OpenClaw
+identity. Dev and Stage get their own account pairs so account state, room
+membership and message history can be reused across releases instead of being
+recreated for every proof. Each identity must have an isolated Keet profile, a
+clearly non-production display name, and allowlisted direct/group test targets
+only.
 
 Recovery material is operational secret state, not plugin state. Store each
 test identity's `recovery_phrase`, backup metadata, display name, username and
@@ -59,6 +63,10 @@ profile path in OpenBao, and reference only the OpenBao path from runbooks or
 evidence. Do not write recovery phrases, backup passwords, invite links, QR
 payloads or raw key material into repository files, GitLab notes, Discord,
 logs, package artifacts or OpenClaw plugin config.
+
+Do not rotate, reset or recreate these test identities as part of routine
+release work. Reuse them across releases and rotate only for an explicit
+security, corruption or recovery reason that is recorded with redacted evidence.
 
 Fake bridge proofs are a preflight for package, contract and gateway behavior.
 Before a production gate for inbound/reply behavior, Dev and Stage should also
