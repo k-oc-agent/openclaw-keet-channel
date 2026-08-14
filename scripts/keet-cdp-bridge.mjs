@@ -343,6 +343,10 @@ function cssId(id) {
   return String(id).replace(/([ !"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1");
 }
 
+export function isReplyMenuItemLabel(text) {
+  return String(text || "").trim() === "Reply";
+}
+
 async function maybeSelectReplyTarget(page, replyToId) {
   if (!replyToId) {
     return false;
@@ -369,6 +373,24 @@ async function maybeSelectReplyTarget(page, replyToId) {
       await button.click({ timeout: 800 });
       await page.waitForTimeout(300);
       return true;
+    } catch {}
+  }
+  const messageMenu = row.locator(".chat-message-menu").first();
+  if (await messageMenu.count() > 0) {
+    try {
+      await messageMenu.click({ timeout: 800, force: true });
+      await page.waitForTimeout(300);
+      const replyItems = page.locator("ul.chat-message-actions__menu li");
+      const replyItemCount = await replyItems.count();
+      for (let index = 0; index < replyItemCount; index += 1) {
+        const replyItem = replyItems.nth(index);
+        const label = await replyItem.innerText({ timeout: 800 }).catch(() => "");
+        if (isReplyMenuItemLabel(label)) {
+          await replyItem.click({ timeout: 800 });
+          await page.waitForTimeout(300);
+          return true;
+        }
+      }
     } catch {}
   }
   return false;

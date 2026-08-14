@@ -145,6 +145,15 @@ describe("Keet CDP bridge candidate", () => {
     ])).toBe("Angekommen.\nBestätigung für diese Nachricht bitte.");
   });
 
+  it("recognizes Keet native Reply entries exposed only through the message menu", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.isReplyMenuItemLabel("Reply")).toBe(true);
+    expect(bridge.isReplyMenuItemLabel(" Reply ")).toBe(true);
+    expect(bridge.isReplyMenuItemLabel("Forward")).toBe(false);
+    expect(bridge.isReplyMenuItemLabel("Delete Message")).toBe(false);
+  });
+
   it("applies the configured group sender allowlist before emitting inbound events", async () => {
     const bridge = await import(bridgeModuleUrl);
     const target = {
