@@ -63,6 +63,18 @@ describe("documentation contract", () => {
     expect(runbook).toContain("Do not clean or reset the Keet profile without explicit approval");
   });
 
+  it("requires dedicated Dev/Stage Keet test identities for real smokes", async () => {
+    const spec = await readFile("docs/spec/mvp.md", "utf8");
+    const readme = await readFile("README.md", "utf8");
+
+    expect(spec).toContain("Dedicated Keet Test Identities");
+    expect(spec).toContain("two throwaway Keet identities");
+    expect(spec).toContain("OpenBao");
+    expect(spec).toContain("recovery_phrase");
+    expect(spec).toContain("Fake bridge proofs are a preflight");
+    expect(readme).toContain("Real Dev/Stage smokes use dedicated Keet test identities");
+  });
+
   it("documents the ClawHub dogfood proof and keeps production gated", async () => {
     const proof = await readFile("docs/proofs/clawhub-dogfood-proof-2026-08-13.md", "utf8");
 
