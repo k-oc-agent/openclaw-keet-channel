@@ -74,6 +74,11 @@ prove at least one real Keet account-to-account path with the dedicated test
 identities, unless the issue explicitly documents why a fake-only proof is
 acceptable.
 
+The required real UAT matrix lives in `docs/uat/dev-stage-real-uat.md` and must
+cover DM, group chat, reply, restart, recovery, negative allowlist and security
+checks when the release touches those behaviors. Add to that list whenever a
+new Keet-visible behavior or live bug reveals a missing coverage area.
+
 ## Inbound Event Flow
 
 Inbound support is designed but not enabled for production until a later bridge

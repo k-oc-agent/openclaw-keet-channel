@@ -40,6 +40,8 @@ in `docs/release.md`.
 Real Dev/Stage smokes use dedicated persistent Keet test identities. Their
 recovery phrases and backup metadata live only in OpenBao; repo docs and
 evidence may reference the OpenBao path but must not contain the secret values.
+The real DM, group chat, reply, restart, recovery, negative and security UAT
+matrix lives in `docs/uat/dev-stage-real-uat.md`.
 
 ## Configuration Sketch
 
