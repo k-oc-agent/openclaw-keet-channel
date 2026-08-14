@@ -14,7 +14,7 @@ import {
   type KeetInboundPollBatch,
   type KeetInboundPollBatchParams,
 } from "./poller.js";
-import { sendTextWithBridgeCli } from "./transport.js";
+import { sendTextWithBridgeCli, type KeetSendReceipt } from "./transport.js";
 
 export type KeetGatewayStatusSink = (patch: Omit<ChannelAccountSnapshot, "accountId">) => void;
 
@@ -39,11 +39,19 @@ export type KeetDeliveryDispatchContext = {
   abortSignal?: AbortSignal;
   setStatus?: KeetGatewayStatusSink;
   now?: () => number;
+  sendText?: (params: {
+    bridgeCommand: string;
+    to: string;
+    text: string;
+    replyToId?: string | null;
+    signal?: AbortSignal;
+  }) => Promise<KeetSendReceipt>;
 };
 
 export type KeetGatewayPollDeps = {
   pollBatch?: (params: KeetInboundPollBatchParams) => Promise<KeetInboundPollBatch>;
   dispatchDelivery?: (ctx: KeetDeliveryDispatchContext) => Promise<void>;
+  sendText?: KeetDeliveryDispatchContext["sendText"];
   now?: () => number;
 };
 
@@ -293,10 +301,12 @@ async function defaultDispatchDelivery(ctx: KeetDeliveryDispatchContext): Promis
       if (!text) {
         return { visibleReplySent: false };
       }
-      const sent = await sendTextWithBridgeCli({
+      const sendText = ctx.sendText ?? sendTextWithBridgeCli;
+      const sent = await sendText({
         bridgeCommand: ctx.account.bridgeCommand!,
         to: ctx.delivery.conversationId,
         text,
+        replyToId: ctx.delivery.messageId,
         signal: ctx.abortSignal,
       });
       return {
@@ -397,6 +407,7 @@ export async function pollAndDispatchKeetInbound(params: KeetGatewayPollParams):
       abortSignal: params.signal,
       setStatus: params.setStatus,
       now,
+      sendText: params.deps?.sendText,
     };
     if (params.dispatchMode === "detached") {
       void dispatchDelivery(deliveryCtx).catch((error: unknown) => {

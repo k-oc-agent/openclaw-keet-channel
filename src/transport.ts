@@ -9,6 +9,7 @@ export type BridgeCliSendParams = {
   bridgeCommand: string;
   to: string;
   text: string;
+  replyToId?: string | null;
   signal?: AbortSignal;
   run?: BridgeCliRun;
 };
@@ -50,6 +51,7 @@ type BridgeCliArgsParams = {
   action: "send";
   to: string;
   text: string;
+  replyToId?: string | null;
 } | {
   bridgeCommand: string;
   action: "poll";
@@ -122,7 +124,11 @@ export function buildBridgeCliArgs(params: BridgeCliArgsParams): string[] {
     throw new Error("Keet text is required");
   }
 
-  return [params.bridgeCommand, params.action, "--chat", to, "--text", params.text];
+  const argv = [params.bridgeCommand, params.action, "--chat", to, "--text", params.text];
+  if (params.replyToId?.trim()) {
+    argv.push("--reply-to", params.replyToId);
+  }
+  return argv;
 }
 
 async function defaultRun(argv: string[], signal?: AbortSignal): Promise<{ stdout: string }> {
@@ -226,6 +232,7 @@ export async function sendTextWithBridgeCli(params: BridgeCliSendParams): Promis
     action: "send",
     to: params.to,
     text: params.text,
+    replyToId: params.replyToId,
   });
   const result = params.run ? await params.run(argv) : await defaultRun(argv, params.signal);
   return parseBridgeReceipt(result.stdout, params.to);

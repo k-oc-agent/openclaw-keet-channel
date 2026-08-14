@@ -214,6 +214,10 @@ describe("Keet gateway poll lifecycle", () => {
   it("dispatches inbound deliveries through the channel runtime turn runner", async () => {
     const state: KeetGatewayPollState = { seenKeys: new Set() };
     const setStatus = vi.fn();
+    const sendText = vi.fn(async () => ({
+      messageId: "reply-m-1",
+      conversationId: "plak0815",
+    }));
     const run = vi.fn(async () => ({ dispatched: true }));
     const buildContext = vi.fn((params) => ({
       Body: params.message.rawBody,
@@ -271,6 +275,7 @@ describe("Keet gateway poll lifecycle", () => {
       channelRuntime,
       deps: {
         pollBatch,
+        sendText,
         now: () => 1234,
       },
     });
@@ -295,6 +300,7 @@ describe("Keet gateway poll lifecycle", () => {
       textForAgent: "hello via runtime",
     });
     const resolved = await runArg.adapter.resolveTurn(ingested, { kind: "message" }, {});
+    await resolved.delivery.deliver({ text: "reply body" });
     expect(buildContext).toHaveBeenCalled();
     expect(resolved).toMatchObject({
       cfg,
@@ -303,6 +309,13 @@ describe("Keet gateway poll lifecycle", () => {
       agentId: "main",
       routeSessionKey: "agent:main:channel:keet:default:direct:plak0815",
       storePath: "sessions",
+    });
+    expect(sendText).toHaveBeenCalledWith({
+      bridgeCommand: "/usr/local/bin/keet-bridge",
+      to: "plak0815",
+      text: "reply body",
+      replyToId: "m-1",
+      signal: undefined,
     });
   });
 

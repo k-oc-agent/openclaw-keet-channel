@@ -49,6 +49,54 @@ describe("fake Keet bridge", () => {
     expect(evidence.messageId).toEqual(receipt.send.latestOutgoing.id);
   });
 
+  it("records reply targets without persisting raw message text", async () => {
+    const tempDir = await mkdtemp(join(tmpdir(), "keet-fake-bridge-"));
+    const logPath = join(tempDir, "bridge.ndjson");
+    const { stdout } = await execFileAsync(
+      "node",
+      [
+        "scripts/fake-keet-bridge.mjs",
+        "send",
+        "--chat",
+        "stage-fake-chat",
+        "--text",
+        "reply body",
+        "--reply-to",
+        "message-parent-1",
+      ],
+      {
+        cwd: process.cwd(),
+        env: {
+          ...process.env,
+          KEET_FAKE_BRIDGE_LOG: logPath,
+        },
+      },
+    );
+
+    const receipt = JSON.parse(stdout);
+    expect(receipt.send.latestOutgoing).toMatchObject({
+      chat: "stage-fake-chat",
+      replyToId: "message-parent-1",
+    });
+
+    const [line] = (await readFile(logPath, "utf8")).trim().split("\n");
+    const evidence = JSON.parse(line);
+    expect(evidence).toMatchObject({
+      action: "send",
+      replyToId: "message-parent-1",
+      argv: [
+        "send",
+        "--chat",
+        "stage-fake-chat",
+        "--text",
+        "<redacted>",
+        "--reply-to",
+        "message-parent-1",
+      ],
+    });
+    expect(JSON.stringify(evidence)).not.toContain("reply body");
+  });
+
   it("polls deterministic fake inbound events without persisting raw text", async () => {
     const tempDir = await mkdtemp(join(tmpdir(), "keet-fake-bridge-"));
     const logPath = join(tempDir, "bridge.ndjson");
