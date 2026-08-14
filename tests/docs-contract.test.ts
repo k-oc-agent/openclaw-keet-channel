@@ -81,7 +81,10 @@ describe("documentation contract", () => {
     expect(uat).toContain("DM UATs");
     expect(uat).toContain("Group Chat UATs");
     expect(uat).toContain("Reply UATs");
+    expect(uat).toContain("Quote Reply UATs");
     expect(uat).toContain("OpenClaw Processing UATs");
+    expect(uat).toContain("UAT-DEV-QUOTE-001");
+    expect(uat).toContain("UAT-STAGE-QUOTE-002");
     expect(uat).toContain("UAT-DEV-PROC-002");
     expect(uat).toContain("UAT-STAGE-PROC-002");
     expect(uat).toContain("Restart And Recovery UATs");
@@ -98,6 +101,7 @@ describe("documentation contract", () => {
     expect(harnessRunbook).toContain("DM A<->B");
     expect(harnessRunbook).toContain("Group A<->B");
     expect(harnessRunbook).toContain("OpenClaw processes the direct event");
+    expect(harnessRunbook).toContain("Run quote reply processing");
     expect(harnessRunbook).toContain("Verify bridge-poll emits the user-authored body");
     expect(harnessRunbook).toContain("profile copy is rejected");
     expect(harnessRunbook).toContain("backup-file export is pending");
@@ -112,6 +116,8 @@ describe("documentation contract", () => {
         "group-b-to-a",
         "bridge-poll-direct",
         "bridge-poll-group",
+        "quote-reply-direct",
+        "quote-reply-group",
         "openclaw-process-direct",
         "openclaw-process-native-reply-direct",
         "openclaw-process-group",
