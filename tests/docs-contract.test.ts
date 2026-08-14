@@ -81,6 +81,9 @@ describe("documentation contract", () => {
     expect(uat).toContain("DM UATs");
     expect(uat).toContain("Group Chat UATs");
     expect(uat).toContain("Reply UATs");
+    expect(uat).toContain("OpenClaw Processing UATs");
+    expect(uat).toContain("UAT-DEV-PROC-002");
+    expect(uat).toContain("UAT-STAGE-PROC-002");
     expect(uat).toContain("Restart And Recovery UATs");
     expect(uat).toContain("Negative And Security UATs");
     expect(uat).toContain("Do not store recovery phrases");
@@ -94,13 +97,25 @@ describe("documentation contract", () => {
     expect(harnessRunbook).toContain("No Secret Evidence Guard");
     expect(harnessRunbook).toContain("DM A<->B");
     expect(harnessRunbook).toContain("Group A<->B");
+    expect(harnessRunbook).toContain("OpenClaw processes the direct event");
+    expect(harnessRunbook).toContain("Verify bridge-poll emits the user-authored body");
     expect(harnessRunbook).toContain("profile copy is rejected");
     expect(harnessRunbook).toContain("backup-file export is pending");
     expect(harnessPlan.environments.map((env: { name: string }) => env.name)).toEqual(["dev", "stage"]);
     for (const env of harnessPlan.environments) {
       expect(env.host).toMatch(/^k-(dev|stage)$/);
       expect(env.accounts).toHaveLength(2);
-      expect(env.uats).toEqual(expect.arrayContaining(["dm-a-to-b", "dm-b-to-a", "group-a-to-b", "group-b-to-a"]));
+      expect(env.uats).toEqual(expect.arrayContaining([
+        "dm-a-to-b",
+        "dm-b-to-a",
+        "group-a-to-b",
+        "group-b-to-a",
+        "bridge-poll-direct",
+        "bridge-poll-group",
+        "openclaw-process-direct",
+        "openclaw-process-native-reply-direct",
+        "openclaw-process-group",
+      ]));
     }
   });
 

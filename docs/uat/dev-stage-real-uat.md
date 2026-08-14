@@ -16,6 +16,13 @@ contracts. They do not replace these real Keet UATs when a release changes
 inbound, reply, room selection, cursor, dedupe, group routing or recovery
 behavior.
 
+Real UATs must prove all three layers separately:
+
+- send: the bridge can put the message into the intended Keet room
+- receive: the peer Keet profile and bridge-poll can see the message
+- process: OpenClaw accepts the inbound event, updates the expected session and
+  produces the expected reply or explicit no-reply decision
+
 The repeatable Dev/Stage harness is documented in
 `docs/uat/persistent-dev-stage-harness.md`. Validate the repo-owned plan before
 host-side UATs:
@@ -66,6 +73,8 @@ For each UAT, record only redacted evidence:
 - test chat names
 - message ids, receipt ids, route keys, timestamps, text length and text hash
 - health/readback status before and after the test
+- OpenClaw session id or route key, processing status and outbound reply
+  receipt when the UAT expects an agent response
 - rollback path and cleanup status
 
 Production OpenClaw config, production Keet profiles, Plak's personal Keet DM
@@ -99,15 +108,37 @@ production gate.
 ### Reply UATs
 
 - `UAT-DEV-REPLY-001`: Dev B replies natively to a Dev A message; poll returns
-  the original message id as `replyToId` when Keet exposes the reply affordance.
+  the user-authored reply body, not the quoted parent text, and preserves
+  `replyToId` when Keet exposes the reply affordance.
 - `UAT-DEV-REPLY-002`: Dev A sends an OpenClaw reply to a Dev B inbound event;
   bridge evidence shows whether `--reply-to` was preserved or explicitly absent.
 - `UAT-STAGE-REPLY-001`: Stage B replies natively to a Stage A message; poll
-  returns the original message id as `replyToId` when Keet exposes the reply
-  affordance.
+  returns the user-authored reply body, not the quoted parent text, and preserves
+  `replyToId` when Keet exposes the reply affordance.
 - `UAT-STAGE-REPLY-002`: Stage A sends an OpenClaw reply to a Stage B inbound
   event; bridge evidence shows whether `--reply-to` was preserved or explicitly
   absent.
+
+### OpenClaw Processing UATs
+
+- `UAT-DEV-PROC-001`: A Dev direct inbound event is accepted by OpenClaw,
+  creates or updates the expected direct session and produces a Keet outbound
+  reply receipt in the same DM target.
+- `UAT-DEV-PROC-002`: A Dev native Keet reply inbound event is accepted by
+  OpenClaw using the non-quoted reply body; a quoted `K OpenClaw` parent must
+  not cause the user body to be dropped as an echo.
+- `UAT-DEV-PROC-003`: A Dev group inbound event is accepted by OpenClaw,
+  creates or updates the expected group session and produces a reply only in the
+  configured group target.
+- `UAT-STAGE-PROC-001`: A Stage direct inbound event is accepted by OpenClaw,
+  creates or updates the expected direct session and produces a Keet outbound
+  reply receipt in the same DM target.
+- `UAT-STAGE-PROC-002`: A Stage native Keet reply inbound event is accepted by
+  OpenClaw using the non-quoted reply body; a quoted `K OpenClaw` parent must
+  not cause the user body to be dropped as an echo.
+- `UAT-STAGE-PROC-003`: A Stage group inbound event is accepted by OpenClaw,
+  creates or updates the expected group session and produces a reply only in the
+  configured group target.
 
 ### Group Chat UATs
 

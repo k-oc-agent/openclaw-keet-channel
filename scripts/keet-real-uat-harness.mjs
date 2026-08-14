@@ -3,7 +3,17 @@ import { readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 
 const DEFAULT_PLAN = "docs/uat/persistent-dev-stage-plan.json";
-const REQUIRED_UATS = ["dm-a-to-b", "dm-b-to-a", "group-a-to-b", "group-b-to-a"];
+const REQUIRED_UATS = [
+  "dm-a-to-b",
+  "dm-b-to-a",
+  "group-a-to-b",
+  "group-b-to-a",
+  "bridge-poll-direct",
+  "bridge-poll-group",
+  "openclaw-process-direct",
+  "openclaw-process-native-reply-direct",
+  "openclaw-process-group",
+];
 const SECRET_KEY_PATTERNS = [
   /backup[_-]?password/i,
   /recovery[_-]?phrase$/i,

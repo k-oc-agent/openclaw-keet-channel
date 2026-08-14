@@ -51,15 +51,27 @@ Run Dev first. Stage follows only after Dev is green.
 5. Run DM A<->B:
    - A sends to B.
    - B bridge-poll receives the direct event.
+   - OpenClaw processes the direct event, updates the expected direct session
+     and emits the expected reply receipt or explicit no-reply decision.
    - B sends to A.
    - A bridge-poll receives the direct event.
+   - OpenClaw processes the reverse direct event with the same session/route
+     assertions.
 6. Run Group A<->B:
    - A sends in the environment UAT group.
    - B bridge-poll receives the group event.
+   - OpenClaw processes the group event under the configured group route only.
    - B sends in the environment UAT group.
    - A bridge-poll receives the group event.
-7. Record message ids, receipt ids, route keys, text lengths and hashes only.
-8. Stop the two test Keet processes and verify no CDP test process remains.
+   - OpenClaw processes the reverse group event under the same group route.
+7. Run native reply processing:
+   - Reply natively to an OpenClaw message.
+   - Verify bridge-poll emits the user-authored body, not the quoted parent.
+   - Verify OpenClaw processes that body and does not drop it as a `K OpenClaw`
+     echo.
+8. Record message ids, receipt ids, route keys, session ids, processing status,
+   text lengths and hashes only.
+9. Stop the two test Keet processes and verify no CDP test process remains.
 
 ## Known Keet Constraints
 
@@ -81,6 +93,10 @@ Post one redacted note per environment:
 - DM A<->B message ids or receipts
 - Group A<->B message ids or receipts
 - bridge-poll direct and group route evidence
+- OpenClaw direct/group processing evidence: session id or route key,
+  processing status and outbound reply receipt or explicit no-reply reason
+- native reply processing evidence: quote/body extraction status and processing
+  result
 - cleanup status
 - explicit statement that no production config, gateway restart or production
   Keet group was touched
