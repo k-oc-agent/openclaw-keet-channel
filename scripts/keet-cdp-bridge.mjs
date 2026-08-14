@@ -139,6 +139,27 @@ export function selectVisibleEvents(events, { limit }) {
   return events.slice(Math.max(0, events.length - boundedLimit));
 }
 
+export function roomNameFromLines(lines) {
+  const normalized = Array.isArray(lines)
+    ? lines.map((line) => String(line).trim()).filter(Boolean)
+    : [];
+  const first = normalized[0] || "";
+  const second = normalized[1] || "";
+  return first.length <= 3 && second ? second : first;
+}
+
+export function isSelectedRoomItemClass(className) {
+  const value = typeof className === "string" ? className : "";
+  return value.includes("bg-grey600") && !value.includes("border-transparent");
+}
+
+export function activeRoomNameFromRoomItems(items) {
+  const selected = Array.isArray(items)
+    ? items.find((item) => item && isSelectedRoomItemClass(item.className))
+    : undefined;
+  return selected ? roomNameFromLines(selected.lines) : undefined;
+}
+
 export function buildPollPayload(events, { limit }) {
   const selected = selectVisibleEvents(events, { limit });
   return {
@@ -197,6 +218,26 @@ async function openChat(page, chatName) {
     await page.getByText(chatName, { exact: true }).first().click();
   }
   await page.waitForTimeout(900);
+  await page.waitForFunction((name) => {
+    const roomItems = [...document.querySelectorAll('[data-testid="room-list-item"]')];
+    const selected = roomItems.find((item) => {
+      const className = item.className?.toString() || "";
+      return className.includes("bg-grey600") && !className.includes("border-transparent");
+    });
+    if (!selected) {
+      return false;
+    }
+    const lines = (selected.innerText || "")
+      .split(/\n+/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const first = lines[0] || "";
+    const second = lines[1] || "";
+    const roomName = first.length <= 3 && second ? second : first;
+    return roomName === name;
+  }, chatName, { timeout: 2500 }).catch(() => {
+    throw new Error(`Keet CDP did not activate expected chat: ${chatName}`);
+  });
 }
 
 async function scrollMessagesToBottom(page) {
