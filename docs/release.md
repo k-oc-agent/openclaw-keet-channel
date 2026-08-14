@@ -1,5 +1,15 @@
 # Release Notes and Rollback
 
+## 0.1.8 Scope
+
+- Routes gateway-native Keet inbound deliveries through the OpenClaw channel
+  runtime turn runner when that runtime surface is available.
+- Keeps the legacy reply dispatcher as a compatibility fallback for older host
+  runtimes.
+- Verifies that Keet Desktop actually activated the requested sidebar room
+  before polling visible messages, so direct and group reads cannot be silently
+  mislabeled after a room switch.
+
 ## 0.1.5 Scope
 
 - Persists the gateway bridge-poll cursor and bounded dedupe keys when
