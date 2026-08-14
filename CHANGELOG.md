@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.14
+
+- Retry Keet Desktop post-send DOM readback and accept a target-room text match
+  when Keet delays the outgoing-direction marker, preventing false
+  `OutboundDeliveryError` results after a successful send.
+- Preserve the existing target-room safety checks before and after send.
+
 ## 0.1.13
 
 - Fail `send --reply-to` closed when Keet Desktop did not actually select a

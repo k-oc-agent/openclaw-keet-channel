@@ -355,6 +355,16 @@ export function assertReplyTargetSelected(replyToId, selectedReplyTarget) {
   }
 }
 
+export function findSentRow(rows, text) {
+  const needle = String(text || "").slice(0, 80);
+  const candidates = Array.isArray(rows)
+    ? rows.filter((row) => row?.id && typeof row?.text === "string" && row.text.includes(needle))
+    : [];
+  return [...candidates].reverse().find((row) => row.direction === "outgoing")
+    ?? candidates.at(-1)
+    ?? null;
+}
+
 async function maybeSelectReplyTarget(page, replyToId) {
   if (!replyToId) {
     return false;
@@ -404,6 +414,21 @@ async function maybeSelectReplyTarget(page, replyToId) {
   return false;
 }
 
+async function readSentRow(page, target, text) {
+  const deadline = Date.now() + 6000;
+  let lastRows = [];
+  while (Date.now() < deadline) {
+    const rows = await readActiveRows(page, target);
+    lastRows = rows;
+    const sent = findSentRow(rows, text);
+    if (sent?.id) {
+      return sent;
+    }
+    await page.waitForTimeout(500);
+  }
+  return findSentRow(lastRows, text);
+}
+
 async function sendText(page, target, text, replyToId) {
   await verifyActiveRoom(page, target, "before reply selection");
   const selectedReplyTarget = await maybeSelectReplyTarget(page, replyToId);
@@ -415,8 +440,7 @@ async function sendText(page, target, text, replyToId) {
   await page.keyboard.press("Enter");
   await page.waitForTimeout(1200);
   await verifyActiveRoom(page, target, "after send");
-  const rows = await readActiveRows(page, target);
-  const sent = [...rows].reverse().find((row) => row.direction === "outgoing" && row.text.includes(text.slice(0, 80)));
+  const sent = await readSentRow(page, target, text);
   if (!sent?.id) {
     throw new Error("Keet CDP send did not return latest outgoing message id");
   }
