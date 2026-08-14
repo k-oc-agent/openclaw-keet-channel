@@ -165,6 +165,27 @@ describe("Keet CDP bridge candidate", () => {
     });
   });
 
+  it("derives the active sidebar room name from Keet selected room styling", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.activeRoomNameFromRoomItems([
+      {
+        className: "border-transparent hover:border-grey600",
+        lines: ["Plak", "1h", "preview"],
+      },
+      {
+        className: "hover:border-grey600 bg-grey600 border-grey600",
+        lines: ["K OC Keet Canary 2026-08-11", "12m", "preview"],
+      },
+    ])).toBe("K OC Keet Canary 2026-08-11");
+    expect(bridge.activeRoomNameFromRoomItems([
+      {
+        className: "border-transparent hover:border-grey600",
+        lines: ["Plak", "1h", "preview"],
+      },
+    ])).toBeUndefined();
+  });
+
   it("declares the runtime command verbs needed by the bridge contract", async () => {
     const bridge = await import(bridgeModuleUrl);
 

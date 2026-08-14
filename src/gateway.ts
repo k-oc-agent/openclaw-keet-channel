@@ -177,6 +177,7 @@ type RuntimeSurface = {
     recordInboundSession?: unknown;
   };
   inbound?: {
+    run?: (params: Record<string, unknown>) => Promise<unknown>;
     buildContext?: (params: Record<string, unknown>) => unknown;
     dispatchReply?: (params: Record<string, unknown>) => Promise<unknown>;
   };
@@ -213,12 +214,13 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 async function defaultDispatchDelivery(ctx: KeetDeliveryDispatchContext): Promise<void> {
   const core = runtimeSurface(ctx.channelRuntime);
   const resolveAgentRoute = core.routing?.resolveAgentRoute;
+  const runInbound = core.inbound?.run;
   const buildContext = core.inbound?.buildContext;
   const dispatchReply = core.inbound?.dispatchReply;
   const recordInboundSession = core.session?.recordInboundSession;
   const dispatchReplyWithBufferedBlockDispatcher = core.reply?.dispatchReplyWithBufferedBlockDispatcher;
 
-  if (!resolveAgentRoute || !buildContext || !dispatchReply || !recordInboundSession || !dispatchReplyWithBufferedBlockDispatcher) {
+  if (!resolveAgentRoute || !buildContext || !recordInboundSession || !dispatchReplyWithBufferedBlockDispatcher) {
     throw new Error("OpenClaw channelRuntime inbound surface is unavailable");
   }
 
@@ -284,6 +286,68 @@ async function defaultDispatchDelivery(ctx: KeetDeliveryDispatchContext): Promis
     },
   });
 
+  const deliveryAdapter = {
+    durable: () => ({ to: ctx.delivery.conversationId, replyToId: ctx.delivery.messageId }),
+    deliver: async (payload: unknown) => {
+      const text = messageText(payload);
+      if (!text) {
+        return { visibleReplySent: false };
+      }
+      const sent = await sendTextWithBridgeCli({
+        bridgeCommand: ctx.account.bridgeCommand!,
+        to: ctx.delivery.conversationId,
+        text,
+        signal: ctx.abortSignal,
+      });
+      return {
+        visibleReplySent: true,
+        messageId: sent.messageId,
+      };
+    },
+    onDelivered: () => {
+      ctx.setStatus?.({ lastOutboundAt: (ctx.now ?? Date.now)() });
+    },
+    onError: (error: unknown, info: { kind?: string }) => {
+      throw new Error(`Keet ${info.kind ?? "reply"} failed: ${String(error)}`);
+    },
+  };
+
+  if (runInbound) {
+    await runInbound({
+      channel: "keet",
+      accountId: ctx.accountId,
+      raw: ctx.delivery,
+      adapter: {
+        ingest: (delivery: KeetInboundDelivery) => ({
+          id: delivery.messageId ?? delivery.routeKey,
+          timestamp: delivery.timestampMs,
+          rawText: delivery.text,
+          textForAgent: delivery.text,
+          textForCommands: delivery.text,
+          raw: delivery,
+        }),
+        resolveTurn: () => ({
+          cfg: ctx.cfg,
+          channel: "keet",
+          accountId: ctx.accountId,
+          agentId: route.agentId,
+          routeSessionKey: route.sessionKey,
+          storePath,
+          ctxPayload,
+          recordInboundSession,
+          dispatchReplyWithBufferedBlockDispatcher,
+          delivery: deliveryAdapter,
+          messageId: ctx.delivery.messageId,
+        }),
+      },
+    });
+    return;
+  }
+
+  if (!dispatchReply) {
+    throw new Error("OpenClaw channelRuntime inbound surface is unavailable");
+  }
+
   await dispatchReply({
     channel: "keet",
     accountId: ctx.accountId,
@@ -294,31 +358,7 @@ async function defaultDispatchDelivery(ctx: KeetDeliveryDispatchContext): Promis
     ctxPayload,
     recordInboundSession,
     dispatchReplyWithBufferedBlockDispatcher,
-    delivery: {
-      durable: () => ({ to: ctx.delivery.conversationId, replyToId: ctx.delivery.messageId }),
-      deliver: async (payload: unknown) => {
-        const text = messageText(payload);
-        if (!text) {
-          return { visibleReplySent: false };
-        }
-        const sent = await sendTextWithBridgeCli({
-          bridgeCommand: ctx.account.bridgeCommand!,
-          to: ctx.delivery.conversationId,
-          text,
-          signal: ctx.abortSignal,
-        });
-        return {
-          visibleReplySent: true,
-          messageId: sent.messageId,
-        };
-      },
-      onDelivered: () => {
-        ctx.setStatus?.({ lastOutboundAt: (ctx.now ?? Date.now)() });
-      },
-      onError: (error: unknown, info: { kind?: string }) => {
-        throw new Error(`Keet ${info.kind ?? "reply"} failed: ${String(error)}`);
-      },
-    },
+    delivery: deliveryAdapter,
   });
 }
 

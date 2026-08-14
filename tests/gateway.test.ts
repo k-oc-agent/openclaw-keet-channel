@@ -211,6 +211,101 @@ describe("Keet gateway poll lifecycle", () => {
     }));
   });
 
+  it("dispatches inbound deliveries through the channel runtime turn runner", async () => {
+    const state: KeetGatewayPollState = { seenKeys: new Set() };
+    const setStatus = vi.fn();
+    const run = vi.fn(async () => ({ dispatched: true }));
+    const buildContext = vi.fn((params) => ({
+      Body: params.message.rawBody,
+      BodyForAgent: params.message.bodyForAgent,
+      CommandBody: params.message.commandBody,
+      RawBody: params.message.rawBody,
+      SessionKey: params.route.dispatchSessionKey,
+      To: params.reply.to,
+    }));
+    const channelRuntime = {
+      routing: {
+        resolveAgentRoute: vi.fn(() => ({
+          agentId: "main",
+          sessionKey: "agent:main:channel:keet:default:direct:plak0815",
+        })),
+      },
+      session: {
+        resolveStorePath: vi.fn(() => "sessions"),
+        recordInboundSession: vi.fn(),
+      },
+      reply: {
+        dispatchReplyWithBufferedBlockDispatcher: vi.fn(),
+      },
+      inbound: {
+        buildContext,
+        run,
+      },
+    };
+    const pollBatch = vi.fn(async () => ({
+      cursor: "1",
+      processed: {
+        deliveries: [
+          {
+            accountId: "default",
+            chatType: "direct" as const,
+            sessionKey: "channel:keet:default:direct:plak0815",
+            routeKey: "keet:default:direct:plak0815",
+            conversationId: "plak0815",
+            senderId: "plak0815",
+            messageId: "m-1",
+            text: "hello via runtime",
+          },
+        ],
+        records: [],
+        seenKeys: new Set(["keet:default:direct:plak0815:m-1"]),
+      },
+    }));
+
+    await pollAndDispatchKeetInbound({
+      cfg,
+      account,
+      accountId: "default",
+      state,
+      setStatus,
+      channelRuntime,
+      deps: {
+        pollBatch,
+        now: () => 1234,
+      },
+    });
+
+    expect(run).toHaveBeenCalledWith(expect.objectContaining({
+      channel: "keet",
+      accountId: "default",
+      raw: expect.objectContaining({
+        messageId: "m-1",
+        text: "hello via runtime",
+      }),
+      adapter: expect.objectContaining({
+        ingest: expect.any(Function),
+        resolveTurn: expect.any(Function),
+      }),
+    }));
+    const runArg = run.mock.calls[0]?.[0];
+    const ingested = runArg.adapter.ingest(runArg.raw);
+    expect(ingested).toMatchObject({
+      id: "m-1",
+      rawText: "hello via runtime",
+      textForAgent: "hello via runtime",
+    });
+    const resolved = await runArg.adapter.resolveTurn(ingested, { kind: "message" }, {});
+    expect(buildContext).toHaveBeenCalled();
+    expect(resolved).toMatchObject({
+      cfg,
+      channel: "keet",
+      accountId: "default",
+      agentId: "main",
+      routeSessionKey: "agent:main:channel:keet:default:direct:plak0815",
+      storePath: "sessions",
+    });
+  });
+
   it("keeps the account running until abort and marks stop in runtime status", async () => {
     vi.useFakeTimers();
     try {
