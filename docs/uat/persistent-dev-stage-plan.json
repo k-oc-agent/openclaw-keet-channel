@@ -1,0 +1,75 @@
+{
+  "issue": "Plak/openclaw-keet-channel#19",
+  "sourceIssue": "Plak/openclaw-keet-channel#17",
+  "evidencePolicy": "redacted-only",
+  "environments": [
+    {
+      "name": "dev",
+      "host": "k-dev",
+      "bridgeConfigPath": "/opt/openclaw/keet-test-identities/dev/bridge-config.json",
+      "groupChat": "K OC Keet Dev UAT",
+      "accounts": [
+        {
+          "role": "a",
+          "displayName": "k-oc-keet-dev-a",
+          "username": "kocdev1a",
+          "openBaoPath": "kv/data/openclaw/keet/dev/test-a",
+          "profilePath": "/opt/openclaw/keet-test-identities/dev/test-a",
+          "recoveryPhraseLength": 24
+        },
+        {
+          "role": "b",
+          "displayName": "k-oc-keet-dev-b",
+          "username": "kocdev1b",
+          "openBaoPath": "kv/data/openclaw/keet/dev/test-b",
+          "profilePath": "/opt/openclaw/keet-test-identities/dev/test-b",
+          "recoveryPhraseLength": 24
+        }
+      ],
+      "uats": [
+        "provisioning-readback",
+        "dm-a-to-b",
+        "dm-b-to-a",
+        "group-a-to-b",
+        "group-b-to-a",
+        "bridge-poll-direct",
+        "bridge-poll-group",
+        "cleanup"
+      ]
+    },
+    {
+      "name": "stage",
+      "host": "k-stage",
+      "bridgeConfigPath": "/opt/openclaw/keet-test-identities/stage/bridge-config.json",
+      "groupChat": "K OC Keet Stage UAT",
+      "accounts": [
+        {
+          "role": "a",
+          "displayName": "k-oc-keet-stage-a",
+          "username": "kocstage1a",
+          "openBaoPath": "kv/data/openclaw/keet/stage/test-a",
+          "profilePath": "/opt/openclaw/keet-test-identities/stage/test-a",
+          "recoveryPhraseLength": 24
+        },
+        {
+          "role": "b",
+          "displayName": "k-oc-keet-stage-b",
+          "username": "kocstage1b",
+          "openBaoPath": "kv/data/openclaw/keet/stage/test-b",
+          "profilePath": "/opt/openclaw/keet-test-identities/stage/test-b",
+          "recoveryPhraseLength": 24
+        }
+      ],
+      "uats": [
+        "provisioning-readback",
+        "dm-a-to-b",
+        "dm-b-to-a",
+        "group-a-to-b",
+        "group-b-to-a",
+        "bridge-poll-direct",
+        "bridge-poll-group",
+        "cleanup"
+      ]
+    }
+  ]
+}
