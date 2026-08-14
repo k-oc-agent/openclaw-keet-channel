@@ -1,5 +1,12 @@
 # Release Notes and Rollback
 
+## 0.1.12 Scope
+
+- Fixes Keet Desktop native reply selection when the client exposes `Reply`
+  only through the message `...` action menu.
+- Keeps the `0.1.10` target-room fail-closed checks before menu selection,
+  before composer focus and after send.
+
 ## 0.1.11 Scope
 
 - Fixes inbound parsing for Keet native replies where the first

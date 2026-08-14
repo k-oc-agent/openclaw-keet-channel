@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.12
+
+- Select Keet native Reply from the message `...` menu when the desktop client
+  exposes quote reply there instead of as a direct hover button.
+- Keep target-room verification before reply selection, before composer focus
+  and after send.
+
 ## 0.1.11
 
 - Read the actual body from native Keet reply rows instead of the quoted parent
