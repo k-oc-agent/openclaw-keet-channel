@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.10
+
+- Fail Keet Desktop CDP sends closed when the selected sidebar room no longer
+  matches the requested target before reply selection, before composer focus or
+  after send.
+- Tie send readback to the verified active target room so a send cannot be
+  reported successful from a stale or wrong-room DOM context.
+
 ## 0.1.9
 
 - Preserve OpenClaw reply context for Keet text sends by declaring `replyTo`
