@@ -9,7 +9,7 @@ directly.
 ### send
 
 ```bash
-keet-bridge send --chat <conversation-id-or-name> --text <message-text>
+keet-bridge send --chat <conversation-id-or-name> --text <message-text> [--reply-to <message-id>]
 ```
 
 The bridge returns JSON on stdout:
@@ -20,11 +20,18 @@ The bridge returns JSON on stdout:
   "send": {
     "latestOutgoing": {
       "id": "message-id",
-      "chat": "conversation-id-or-name"
+      "chat": "conversation-id-or-name",
+      "replyToId": "message-id-being-answered"
     }
   }
 }
 ```
+
+`--reply-to` is optional. When present, the bridge SHOULD use the native Keet
+reply/quote action for that message id before sending. If the active Keet
+client build cannot expose a native reply affordance, the bridge MAY still send
+the message without `replyToId` in `latestOutgoing`; the absence is explicit
+evidence that native quote selection was not preserved for that send.
 
 ### poll
 

@@ -281,7 +281,43 @@ async function readActiveRows(page, target) {
   }, target);
 }
 
-async function sendText(page, text) {
+function cssId(id) {
+  return String(id).replace(/([ !"#$%&'()*+,./:;<=>?@[\\\]^`{|}~])/g, "\\$1");
+}
+
+async function maybeSelectReplyTarget(page, replyToId) {
+  if (!replyToId) {
+    return false;
+  }
+  const row = page.locator(`#${cssId(replyToId)}`).first();
+  if (await row.count() === 0) {
+    return false;
+  }
+  await row.hover();
+  const selectors = [
+    '[data-testid="message-reply"]',
+    '[data-testid="message-reply-button"]',
+    '[aria-label="Reply"]',
+    '[aria-label*="Reply"]',
+    '[title="Reply"]',
+    '[title*="Reply"]',
+  ];
+  for (const selector of selectors) {
+    const button = page.locator(selector).last();
+    if (await button.count() === 0) {
+      continue;
+    }
+    try {
+      await button.click({ timeout: 800 });
+      await page.waitForTimeout(300);
+      return true;
+    } catch {}
+  }
+  return false;
+}
+
+async function sendText(page, text, replyToId) {
+  const selectedReplyTarget = await maybeSelectReplyTarget(page, replyToId);
   const editor = page.locator('[contenteditable="true"][role="textbox"]').last();
   await editor.click();
   await editor.fill(text);
@@ -292,16 +328,17 @@ async function sendText(page, text) {
   if (!sent?.id) {
     throw new Error("Keet CDP send did not return latest outgoing message id");
   }
-  return sent;
+  return { ...sent, replyToId: selectedReplyTarget ? replyToId : undefined };
 }
 
 async function runSend(args) {
   const config = await loadBridgeConfig(args.config || DEFAULT_CONFIG_PATH);
   const target = resolveChatTarget(config, args.chat);
   const text = requireString(args.text, "--text");
+  const replyToId = readString(args["reply-to"]);
   const sent = await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
     await openChat(page, target.chat);
-    return await sendText(page, text);
+    return await sendText(page, text, replyToId);
   });
   return {
     ok: true,
@@ -309,6 +346,7 @@ async function runSend(args) {
       latestOutgoing: {
         id: sent.id,
         chat: target.conversationId,
+        ...(sent.replyToId ? { replyToId: sent.replyToId } : {}),
       },
     },
   };

@@ -1,5 +1,14 @@
 # Release Notes and Rollback
 
+## 0.1.9 Scope
+
+- Preserves the triggering Keet message id when OpenClaw replies to an inbound
+  Keet turn, so bridge adapters can use Keet's native reply/quote action.
+- Declares durable `replyTo` support for the Keet message adapter and includes
+  the reply target in OpenClaw receipts.
+- Extends the local bridge boundary with `send --reply-to <message-id>` while
+  keeping raw message text out of persistent evidence.
+
 ## 0.1.8 Scope
 
 - Routes gateway-native Keet inbound deliveries through the OpenClaw channel

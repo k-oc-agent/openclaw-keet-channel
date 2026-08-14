@@ -25,6 +25,27 @@ describe("Keet bridge-cli transport", () => {
     ]);
   });
 
+  it("passes native reply targets as separate bridge argv entries", () => {
+    expect(
+      buildBridgeCliArgs({
+        bridgeCommand: "/usr/local/bin/keet-bridge",
+        action: "send",
+        to: "Plak",
+        text: "reply text",
+        replyToId: "message-parent-1",
+      }),
+    ).toEqual([
+      "/usr/local/bin/keet-bridge",
+      "send",
+      "--chat",
+      "Plak",
+      "--text",
+      "reply text",
+      "--reply-to",
+      "message-parent-1",
+    ]);
+  });
+
   it("builds poll argv with bounded limits and optional cursor", () => {
     expect(
       buildBridgeCliArgs({
@@ -94,6 +115,7 @@ describe("Keet bridge-cli transport", () => {
         bridgeCommand: "/usr/local/bin/keet-bridge",
         to: "Plak",
         text: "pong",
+        replyToId: "m-parent",
         run,
       }),
     ).resolves.toEqual({
@@ -112,6 +134,8 @@ describe("Keet bridge-cli transport", () => {
       "Plak",
       "--text",
       "pong",
+      "--reply-to",
+      "m-parent",
     ]);
   });
 

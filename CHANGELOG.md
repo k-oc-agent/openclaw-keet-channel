@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.9
+
+- Preserve OpenClaw reply context for Keet text sends by declaring `replyTo`
+  support and forwarding `replyToId` through the message adapter, gateway
+  inbound reply path and bridge CLI.
+- Extend the fake bridge and Keet Desktop CDP bridge contract with
+  `send --reply-to <message-id>` evidence.
+
 ## 0.1.8
 
 - Route gateway-native Keet inbound deliveries through the OpenClaw channel

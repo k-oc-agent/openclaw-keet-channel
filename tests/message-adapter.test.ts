@@ -28,7 +28,7 @@ const cfg = {
 };
 
 describe("Keet message adapter", () => {
-  it("declares only durable text send support for the MVP", () => {
+  it("declares durable text replies through Keet native reply targets", () => {
     const adapter = createKeetMessageAdapter({
       sendText: async () => ({
         messageId: "unused",
@@ -41,7 +41,7 @@ describe("Keet message adapter", () => {
       text: true,
       media: false,
       poll: false,
-      replyTo: false,
+      replyTo: true,
       thread: false,
       messageSendingHooks: true,
     });
@@ -59,6 +59,7 @@ describe("Keet message adapter", () => {
       cfg: {},
       to: "Plak",
       text: "Hallo",
+      replyToId: "keet-message-parent",
       accountId: "default",
       signal: new AbortController().signal,
     });
@@ -67,13 +68,16 @@ describe("Keet message adapter", () => {
       cfg: {},
       to: "Plak",
       text: "Hallo",
+      replyToId: "keet-message-parent",
       accountId: "default",
       signal: expect.any(AbortSignal),
     });
     expect(result.receipt.primaryPlatformMessageId).toBe("keet-message-1");
+    expect(result.receipt.replyToId).toBe("keet-message-parent");
     expect(result.receipt.parts[0]).toMatchObject({
       platformMessageId: "keet-message-1",
       kind: "text",
+      replyToId: "keet-message-parent",
       raw: {
         channel: "keet",
         messageId: "keet-message-1",

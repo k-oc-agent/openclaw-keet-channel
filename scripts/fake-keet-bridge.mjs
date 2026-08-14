@@ -16,6 +16,8 @@ function parseArgs(argv) {
       params.chat = value;
     } else if (key === "--text") {
       params.text = value;
+    } else if (key === "--reply-to") {
+      params.replyToId = value;
     } else if (key === "--account") {
       params.account = value;
     } else if (key === "--limit") {
@@ -38,7 +40,7 @@ function sha256(value) {
 }
 
 function stableMessageId(params) {
-  return `fake-keet-${sha256(`${params.chat}\0${params.text}`).slice(0, 24)}`;
+  return `fake-keet-${sha256(`${params.chat}\0${params.replyToId ?? ""}\0${params.text}`).slice(0, 24)}`;
 }
 
 function stableInviteLink(params) {
@@ -81,6 +83,7 @@ if (params.action === "send") {
     textSha256: sha256(params.text),
     textLength: params.text.length,
     messageId,
+    ...(params.replyToId ? { replyToId: params.replyToId } : {}),
     realKeetTouched: false,
     createdAt: new Date().toISOString(),
   });
@@ -92,6 +95,7 @@ if (params.action === "send") {
       latestOutgoing: {
         id: messageId,
         chat: params.chat,
+        ...(params.replyToId ? { replyToId: params.replyToId } : {}),
       },
     },
   })}\n`);

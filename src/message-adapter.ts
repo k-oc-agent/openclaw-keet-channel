@@ -10,6 +10,7 @@ export type KeetSendTextContext = {
   cfg: unknown;
   to: string;
   text: string;
+  replyToId?: string | null;
   accountId?: string | null;
   signal?: AbortSignal;
 };
@@ -29,6 +30,7 @@ async function defaultSendText(ctx: KeetSendTextContext): Promise<KeetSendReceip
     bridgeCommand: account.bridgeCommand!,
     to: ctx.to,
     text: ctx.text,
+    replyToId: ctx.replyToId,
     signal: ctx.signal,
   });
 }
@@ -43,17 +45,18 @@ export function createKeetMessageAdapter(deps: KeetMessageAdapterDeps = {}) {
         text: true,
         media: false,
         poll: false,
-        replyTo: false,
+        replyTo: true,
         thread: false,
         messageSendingHooks: true,
       },
     },
     send: {
-      text: async ({ cfg, to, text, accountId, signal }) => {
+      text: async ({ cfg, to, text, replyToId, accountId, signal }) => {
         const sent = await sendText({
           cfg,
           to,
           text,
+          replyToId,
           accountId,
           signal,
         });
@@ -68,6 +71,7 @@ export function createKeetMessageAdapter(deps: KeetMessageAdapterDeps = {}) {
               },
             ],
             kind: "text",
+            replyToId: replyToId ?? undefined,
           }),
         };
       },
