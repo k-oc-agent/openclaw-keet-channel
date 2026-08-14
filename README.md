@@ -37,6 +37,10 @@ The public bridge command contract is documented in
 `docs/bridge-cli-contract.md`; release and rollback boundaries are documented
 in `docs/release.md`.
 
+Real Dev/Stage smokes use dedicated Keet test identities. Their recovery
+phrases and backup metadata live only in OpenBao; repo docs and evidence may
+reference the OpenBao path but must not contain the secret values.
+
 ## Configuration Sketch
 
 ```json

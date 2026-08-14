@@ -46,6 +46,26 @@ on Dev/Stage without touching production Keet groups.
 - Any Stage smoke must record host identity, config path, plugin package hash,
   target chat id/name, and proof that production Keet groups were not used.
 
+## Dedicated Keet Test Identities
+
+Real Dev/Stage smokes should use two throwaway Keet identities, not Plak's
+personal account and not the production K OpenClaw identity. Each identity must
+have an isolated Keet profile, a clearly non-production display name, and
+allowlisted direct/group test targets only.
+
+Recovery material is operational secret state, not plugin state. Store each
+test identity's `recovery_phrase`, backup metadata, display name, username and
+profile path in OpenBao, and reference only the OpenBao path from runbooks or
+evidence. Do not write recovery phrases, backup passwords, invite links, QR
+payloads or raw key material into repository files, GitLab notes, Discord,
+logs, package artifacts or OpenClaw plugin config.
+
+Fake bridge proofs are a preflight for package, contract and gateway behavior.
+Before a production gate for inbound/reply behavior, Dev and Stage should also
+prove at least one real Keet account-to-account path with the dedicated test
+identities, unless the issue explicitly documents why a fake-only proof is
+acceptable.
+
 ## Inbound Event Flow
 
 Inbound support is designed but not enabled for production until a later bridge
