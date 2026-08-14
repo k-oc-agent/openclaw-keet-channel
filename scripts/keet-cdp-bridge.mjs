@@ -103,6 +103,19 @@ export function isOpenClawEchoText(text) {
   return typeof text === "string" && text.startsWith("K OpenClaw\n");
 }
 
+export function extractMessageBodyText(parts) {
+  const normalized = Array.isArray(parts)
+    ? parts
+      .map((part) => ({
+        text: typeof part?.text === "string" ? part.text.trim() : "",
+        isReplyQuote: part?.isReplyQuote === true,
+      }))
+      .filter((part) => part.text)
+    : [];
+  const bodyParts = normalized.filter((part) => !part.isReplyQuote);
+  return (bodyParts.at(-1) ?? normalized.at(-1))?.text ?? "";
+}
+
 export function eventFromRow(row, { target, aliases }) {
   if (row?.direction !== "incoming" || !row?.text) {
     return null;
@@ -291,12 +304,15 @@ async function scrollMessagesToBottom(page) {
 
 async function readActiveRows(page, target) {
   await scrollMessagesToBottom(page);
-  return await page.evaluate(() => {
+  const rows = await page.evaluate(() => {
     let lastIncomingSender = "";
     return [...document.querySelectorAll(".chat-message")]
       .map((el) => {
         const id = el.id || "";
-        const text = (el.querySelector(".chat-message__text")?.innerText || "").trim();
+        const textParts = [...el.querySelectorAll(".chat-message__text")].map((node) => ({
+          text: (node.innerText || "").trim(),
+          isReplyQuote: Boolean(node.closest("blockquote.reply-to-root")),
+        }));
         let sender = (el.querySelector(".chat-event-message__other-member-name")?.innerText || "").trim();
         const row = el.closest(".tw-1in0x60");
         const rowClass = row?.className?.toString() || "";
@@ -307,13 +323,20 @@ async function readActiveRows(page, target) {
             lastIncomingSender = sender;
           }
         }
-        if (!id || !text) {
+        if (!id || textParts.length === 0) {
           return null;
         }
-        return { id, text, sender, direction };
+        return { id, textParts, sender, direction };
       })
       .filter(Boolean);
   }, target);
+  return rows
+    .map((row) => ({
+      ...row,
+      text: extractMessageBodyText(row.textParts),
+      textParts: undefined,
+    }))
+    .filter((row) => row.id && row.text);
 }
 
 function cssId(id) {

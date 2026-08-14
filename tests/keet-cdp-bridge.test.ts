@@ -130,6 +130,21 @@ describe("Keet CDP bridge candidate", () => {
     });
   });
 
+  it("extracts the real body from native Keet replies instead of the quoted K message", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.extractMessageBodyText([
+      {
+        text: "K OpenClaw\nprod 0.1.10 dm reply smoke 194722",
+        isReplyQuote: true,
+      },
+      {
+        text: "Angekommen.\nBestätigung für diese Nachricht bitte.",
+        isReplyQuote: false,
+      },
+    ])).toBe("Angekommen.\nBestätigung für diese Nachricht bitte.");
+  });
+
   it("applies the configured group sender allowlist before emitting inbound events", async () => {
     const bridge = await import(bridgeModuleUrl);
     const target = {
