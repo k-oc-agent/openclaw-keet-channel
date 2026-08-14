@@ -49,11 +49,11 @@ describe("persistent Keet real UAT harness", () => {
     );
   });
 
-  it("fails closed when an environment omits DM or group coverage", async () => {
+  it("fails closed when an environment omits receive or processing coverage", async () => {
     const tempDir = await mkdtemp(join(tmpdir(), "keet-real-uat-plan-"));
     const planPath = join(tempDir, "plan.json");
     const plan = JSON.parse(await readFile("docs/uat/persistent-dev-stage-plan.json", "utf8"));
-    plan.environments[0].uats = ["dm-a-to-b"];
+    plan.environments[0].uats = ["dm-a-to-b", "dm-b-to-a", "group-a-to-b", "group-b-to-a"];
     await writeFile(planPath, JSON.stringify(plan));
 
     await expect(loadPlan(planPath).then(validatePlan)).rejects.toThrow(/missing required UAT/i);

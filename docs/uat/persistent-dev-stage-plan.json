@@ -34,6 +34,9 @@
         "group-b-to-a",
         "bridge-poll-direct",
         "bridge-poll-group",
+        "openclaw-process-direct",
+        "openclaw-process-native-reply-direct",
+        "openclaw-process-group",
         "cleanup"
       ]
     },
@@ -68,6 +71,9 @@
         "group-b-to-a",
         "bridge-poll-direct",
         "bridge-poll-group",
+        "openclaw-process-direct",
+        "openclaw-process-native-reply-direct",
+        "openclaw-process-group",
         "cleanup"
       ]
     }
