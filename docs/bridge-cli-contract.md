@@ -33,6 +33,12 @@ client build cannot expose a native reply affordance, the bridge MAY still send
 the message without `replyToId` in `latestOutgoing`; the absence is explicit
 evidence that native quote selection was not preserved for that send.
 
+UI-backed bridge adapters MUST fail closed when the active room cannot be
+verified as the requested `--chat` target immediately before reply selection,
+immediately before focusing the composer and immediately after the send. The
+returned `latestOutgoing` id MUST be read from that verified target room, not
+from a stale or merely currently visible message row.
+
 ### poll
 
 ```bash

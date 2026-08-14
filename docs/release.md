@@ -1,5 +1,14 @@
 # Release Notes and Rollback
 
+## 0.1.10 Scope
+
+- Hardens the Keet Desktop CDP bridge send path after a production smoke found
+  that a DM-targeted send could be delivered to the active Canary group room.
+- Fails closed unless the selected sidebar room matches the requested target
+  before reply selection, before composer focus and after the send.
+- Reads the outgoing message id only from the verified target room after send,
+  so wrong-room delivery cannot be reported as a successful target receipt.
+
 ## 0.1.9 Scope
 
 - Preserves the triggering Keet message id when OpenClaw replies to an inbound

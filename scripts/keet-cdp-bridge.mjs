@@ -160,6 +160,14 @@ export function activeRoomNameFromRoomItems(items) {
   return selected ? roomNameFromLines(selected.lines) : undefined;
 }
 
+export function assertExpectedActiveRoomName(activeRoomName, expectedRoomName, phase) {
+  if (activeRoomName !== expectedRoomName) {
+    throw new Error(
+      `Keet CDP active room mismatch ${phase}: expected ${expectedRoomName}, active ${activeRoomName || "<none>"}`,
+    );
+  }
+}
+
 export function buildPollPayload(events, { limit }) {
   const selected = selectVisibleEvents(events, { limit });
   return {
@@ -240,6 +248,33 @@ async function openChat(page, chatName) {
   });
 }
 
+async function readActiveRoomName(page) {
+  return await page.evaluate(() => {
+    const roomItems = [...document.querySelectorAll('[data-testid="room-list-item"]')].map((item) => ({
+      className: item.className?.toString() || "",
+      lines: (item.innerText || "")
+        .split(/\n+/)
+        .map((line) => line.trim())
+        .filter(Boolean),
+    }));
+    const selected = roomItems.find((item) => {
+      const className = item.className || "";
+      return className.includes("bg-grey600") && !className.includes("border-transparent");
+    });
+    if (!selected) {
+      return undefined;
+    }
+    const first = selected.lines[0] || "";
+    const second = selected.lines[1] || "";
+    return first.length <= 3 && second ? second : first;
+  });
+}
+
+async function verifyActiveRoom(page, target, phase) {
+  const activeRoomName = await readActiveRoomName(page);
+  assertExpectedActiveRoomName(activeRoomName, target.chat, phase);
+}
+
 async function scrollMessagesToBottom(page) {
   await page.evaluate(() => {
     const scrollables = [...document.querySelectorAll("*")].filter((el) => {
@@ -316,14 +351,17 @@ async function maybeSelectReplyTarget(page, replyToId) {
   return false;
 }
 
-async function sendText(page, text, replyToId) {
+async function sendText(page, target, text, replyToId) {
+  await verifyActiveRoom(page, target, "before reply selection");
   const selectedReplyTarget = await maybeSelectReplyTarget(page, replyToId);
+  await verifyActiveRoom(page, target, "before composer");
   const editor = page.locator('[contenteditable="true"][role="textbox"]').last();
   await editor.click();
   await editor.fill(text);
   await page.keyboard.press("Enter");
   await page.waitForTimeout(1200);
-  const rows = await readActiveRows(page);
+  await verifyActiveRoom(page, target, "after send");
+  const rows = await readActiveRows(page, target);
   const sent = [...rows].reverse().find((row) => row.direction === "outgoing" && row.text.includes(text.slice(0, 80)));
   if (!sent?.id) {
     throw new Error("Keet CDP send did not return latest outgoing message id");
@@ -338,7 +376,7 @@ async function runSend(args) {
   const replyToId = readString(args["reply-to"]);
   const sent = await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
     await openChat(page, target.chat);
-    return await sendText(page, text, replyToId);
+    return await sendText(page, target, text, replyToId);
   });
   return {
     ok: true,

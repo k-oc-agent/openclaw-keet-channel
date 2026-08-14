@@ -186,6 +186,20 @@ describe("Keet CDP bridge candidate", () => {
     ])).toBeUndefined();
   });
 
+  it("fails closed when the active room differs from the requested send target", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(() => bridge.assertExpectedActiveRoomName("K OC Keet Canary 2026-08-11", "Plak", "before composer"))
+      .toThrow("Keet CDP active room mismatch before composer: expected Plak, active K OC Keet Canary 2026-08-11");
+  });
+
+  it("fails closed when the requested send target has no selected sidebar room", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(() => bridge.assertExpectedActiveRoomName(undefined, "Plak", "after send"))
+      .toThrow("Keet CDP active room mismatch after send: expected Plak, active <none>");
+  });
+
   it("declares the runtime command verbs needed by the bridge contract", async () => {
     const bridge = await import(bridgeModuleUrl);
 
