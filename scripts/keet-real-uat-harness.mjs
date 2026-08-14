@@ -10,6 +10,8 @@ const REQUIRED_UATS = [
   "group-b-to-a",
   "bridge-poll-direct",
   "bridge-poll-group",
+  "quote-reply-direct",
+  "quote-reply-group",
   "openclaw-process-direct",
   "openclaw-process-native-reply-direct",
   "openclaw-process-group",

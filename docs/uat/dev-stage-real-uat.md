@@ -119,14 +119,29 @@ production gate.
   event; bridge evidence shows whether `--reply-to` was preserved or explicitly
   absent.
 
+### Quote Reply UATs
+
+- `UAT-DEV-QUOTE-001`: Dev B uses Keet quote reply in DM to quote a Dev A /
+  OpenClaw message; bridge-poll emits the user-authored body separately from the
+  quoted parent block.
+- `UAT-DEV-QUOTE-002`: Dev B uses Keet quote reply in the Dev group; bridge-poll
+  emits the user-authored body under the group route and does not route it as a
+  direct message.
+- `UAT-STAGE-QUOTE-001`: Stage B uses Keet quote reply in DM to quote a Stage A
+  / OpenClaw message; bridge-poll emits the user-authored body separately from
+  the quoted parent block.
+- `UAT-STAGE-QUOTE-002`: Stage B uses Keet quote reply in the Stage group;
+  bridge-poll emits the user-authored body under the group route and does not
+  route it as a direct message.
+
 ### OpenClaw Processing UATs
 
 - `UAT-DEV-PROC-001`: A Dev direct inbound event is accepted by OpenClaw,
   creates or updates the expected direct session and produces a Keet outbound
   reply receipt in the same DM target.
 - `UAT-DEV-PROC-002`: A Dev native Keet reply inbound event is accepted by
-  OpenClaw using the non-quoted reply body; a quoted `K OpenClaw` parent must
-  not cause the user body to be dropped as an echo.
+  OpenClaw using the non-quoted quote-reply body; a quoted `K OpenClaw` parent
+  must not cause the user body to be dropped as an echo.
 - `UAT-DEV-PROC-003`: A Dev group inbound event is accepted by OpenClaw,
   creates or updates the expected group session and produces a reply only in the
   configured group target.
@@ -134,8 +149,8 @@ production gate.
   creates or updates the expected direct session and produces a Keet outbound
   reply receipt in the same DM target.
 - `UAT-STAGE-PROC-002`: A Stage native Keet reply inbound event is accepted by
-  OpenClaw using the non-quoted reply body; a quoted `K OpenClaw` parent must
-  not cause the user body to be dropped as an echo.
+  OpenClaw using the non-quoted quote-reply body; a quoted `K OpenClaw` parent
+  must not cause the user body to be dropped as an echo.
 - `UAT-STAGE-PROC-003`: A Stage group inbound event is accepted by OpenClaw,
   creates or updates the expected group session and produces a reply only in the
   configured group target.

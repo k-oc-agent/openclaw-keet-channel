@@ -64,8 +64,9 @@ Run Dev first. Stage follows only after Dev is green.
    - B sends in the environment UAT group.
    - A bridge-poll receives the group event.
    - OpenClaw processes the reverse group event under the same group route.
-7. Run native reply processing:
-   - Reply natively to an OpenClaw message.
+7. Run quote reply processing:
+   - Reply with Keet's quote reply UI to an OpenClaw message in DM.
+   - Reply with Keet's quote reply UI to an OpenClaw message in the group.
    - Verify bridge-poll emits the user-authored body, not the quoted parent.
    - Verify OpenClaw processes that body and does not drop it as a `K OpenClaw`
      echo.
@@ -95,8 +96,8 @@ Post one redacted note per environment:
 - bridge-poll direct and group route evidence
 - OpenClaw direct/group processing evidence: session id or route key,
   processing status and outbound reply receipt or explicit no-reply reason
-- native reply processing evidence: quote/body extraction status and processing
-  result
+- quote reply processing evidence: quote/body extraction status, route
+  classification and processing result for both direct and group
 - cleanup status
 - explicit statement that no production config, gateway restart or production
   Keet group was touched
