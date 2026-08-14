@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8
+
+- Route gateway-native Keet inbound deliveries through the OpenClaw channel
+  runtime turn runner when available, keeping the legacy reply dispatcher only
+  as a compatibility fallback.
+- Fail CDP polling when Keet Desktop did not activate the requested sidebar
+  room before message extraction, preventing direct/group room mixups.
+
 ## 0.1.7
 
 - Make the repo-owned Keet Desktop CDP bridge candidate match the current
