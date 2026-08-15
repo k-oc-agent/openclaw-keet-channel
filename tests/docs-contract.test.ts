@@ -152,9 +152,9 @@ describe("documentation contract", () => {
   });
 
   it("documents the current-version function UAT matrix", async () => {
-    const report = await readFile("docs/uat/current-version-0.1.19.md", "utf8");
+    const report = await readFile("docs/uat/current-version-0.1.20.md", "utf8");
 
-    expect(report).toContain("Issue: `Plak/openclaw-keet-channel#30`");
+    expect(report).toContain("Issue: `Plak/openclaw-keet-channel#32`");
     expect(report).toContain("## Function Matrix");
     expect(report).toContain("normal DM send");
     expect(report).toContain("normal Canary group send");
@@ -165,6 +165,7 @@ describe("documentation contract", () => {
     expect(report).toContain("delete group chat");
     expect(report).toContain("not executed: destructive");
     expect(report).toContain("blocked: missing fixture");
-    expect(report).toContain("Channel keet is unavailable for message actions");
+    expect(report).toContain("handledBy=plugin");
+    expect(report).toContain("not a general-purpose Keet automation client");
   });
 });
