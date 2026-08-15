@@ -210,6 +210,29 @@ describe("Keet CDP bridge candidate", () => {
     });
   });
 
+  it("maps Keet group admin sender labels before applying the allowlist", async () => {
+    const bridge = await import(bridgeModuleUrl);
+    const target = {
+      chatType: "group",
+      conversationId: "K OC Keet Canary 2026-08-11",
+      allowFrom: ["plak0815"],
+    };
+
+    expect(bridge.eventFromRow(
+      {
+        id: "m-admin",
+        direction: "incoming",
+        sender: "Plak\nAdmin",
+        text: "canary inbound should route",
+      },
+      { target, aliases: { Plak: "plak0815" } },
+    )).toMatchObject({
+      id: "m-admin",
+      sender: "plak0815",
+      text: "canary inbound should route",
+    });
+  });
+
   it("derives the active sidebar room name from Keet selected room styling", async () => {
     const bridge = await import(bridgeModuleUrl);
 

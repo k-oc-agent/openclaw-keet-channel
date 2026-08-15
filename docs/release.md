@@ -1,5 +1,15 @@
 # Release Notes and Rollback
 
+## 0.1.19 Scope
+
+- Fixes the Canary group inbound blocker where Keet Desktop can render a group
+  sender with a role suffix, for example `Plak\nAdmin`.
+- The CDP bridge now normalizes sender labels before alias lookup and group
+  allowlist checks, allowing the existing production alias `Plak -> plak0815`
+  to match the configured Canary allowlist.
+- Production install still requires an explicit production gate and fresh
+  Canary inbound processing evidence.
+
 ## 0.1.18 Scope
 
 - Fixes a production 0.1.16 dogfood failure where a single Keet DM send wrote

@@ -116,6 +116,15 @@ export function extractMessageBodyText(parts) {
   return (bodyParts.at(-1) ?? normalized.at(-1))?.text ?? "";
 }
 
+export function normalizeSenderLabel(sender) {
+  return String(sender || "")
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .find((line) => !["Admin", "Owner", "Moderator"].includes(line))
+    || String(sender || "").trim();
+}
+
 export function eventFromRow(row, { target, aliases }) {
   if (row?.direction !== "incoming" || !row?.text) {
     return null;
@@ -127,7 +136,7 @@ export function eventFromRow(row, { target, aliases }) {
   if (isOpenClawEchoText(text)) {
     return null;
   }
-  const sender = String(row.sender || target.conversationId);
+  const sender = normalizeSenderLabel(row.sender || target.conversationId);
   const normalizedSender = aliases[sender] ?? sender;
   if (
     target.chatType === "group"
