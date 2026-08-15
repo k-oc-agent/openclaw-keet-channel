@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.19
+
+- Normalize Keet group sender labels such as `Plak\nAdmin` before applying
+  sender aliases and group allowlists, so Canary group inbound rows from
+  allowlisted admins can be emitted instead of filtered out before OpenClaw
+  processing.
+
 ## 0.1.18
 
 - Reuse a recent visible outgoing target-room row before retrying the same
