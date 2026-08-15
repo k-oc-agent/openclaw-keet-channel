@@ -151,7 +151,17 @@ describe("Keet CDP bridge candidate", () => {
     expect(bridge.isReplyMenuItemLabel("Reply")).toBe(true);
     expect(bridge.isReplyMenuItemLabel(" Reply ")).toBe(true);
     expect(bridge.isReplyMenuItemLabel("Forward")).toBe(false);
+    expect(bridge.isReplyMenuItemLabel("Forward Message")).toBe(false);
     expect(bridge.isReplyMenuItemLabel("Delete Message")).toBe(false);
+  });
+
+  it("recognizes Keet Forward menu entries as unsupported reply alternatives", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.isForwardMenuItemLabel("Forward")).toBe(true);
+    expect(bridge.isForwardMenuItemLabel(" Forward Message ")).toBe(true);
+    expect(bridge.isForwardMenuItemLabel("Reply")).toBe(false);
+    expect(bridge.isForwardMenuItemLabel("Delete Message")).toBe(false);
   });
 
   it("fails closed instead of sending a plain message when reply target selection fails", async () => {
@@ -159,6 +169,8 @@ describe("Keet CDP bridge candidate", () => {
 
     expect(() => bridge.assertReplyTargetSelected("message-parent", false))
       .toThrow("could not select native reply target message-parent");
+    expect(() => bridge.assertReplyTargetSelected("message-parent", false, { forwardActionSeen: true }))
+      .toThrow("found native Forward but not Reply for message-parent");
     expect(() => bridge.assertReplyTargetSelected("message-parent", true)).not.toThrow();
     expect(() => bridge.assertReplyTargetSelected(undefined, false)).not.toThrow();
   });
