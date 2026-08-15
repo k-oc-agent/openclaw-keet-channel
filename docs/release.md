@@ -1,5 +1,18 @@
 # Release Notes and Rollback
 
+## 0.1.16 Scope
+
+- Fixes the production dogfood issue where the same Keet DM reply could be sent
+  more than once when a Keet inbound turn used an explicit message-tool send
+  while the channel runtime also owned visible reply delivery.
+- Adds a short outbound idempotency window keyed by account, target, reply id
+  and text. The duplicate path returns the first send receipt without invoking
+  the Keet bridge again.
+- Blocks internal OpenClaw status/progress text, including `Model Fallback:`,
+  before it reaches Keet Desktop as a human-visible message.
+- Production install still requires an explicit production gate and fresh
+  visible DM/Canary readback evidence.
+
 ## 0.1.15 Scope
 
 - Tightens the release/UAT contract after production dogfood showed that DM and

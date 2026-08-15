@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.16
+
+- Suppress duplicate Keet text sends to the same target/reply id inside a short
+  idempotency window, preventing message-tool plus runtime-final paths from
+  double-posting the same visible DM reply.
+- Reject internal OpenClaw status/progress text such as `Model Fallback:` before
+  it can reach Keet Desktop as a human-visible message.
+
 ## 0.1.15
 
 - Require fresh DM and Canary production processing smokes before a prod gate can
