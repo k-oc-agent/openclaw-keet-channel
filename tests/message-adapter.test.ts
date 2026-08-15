@@ -86,6 +86,55 @@ describe("Keet message adapter", () => {
     });
   });
 
+  it("does not send duplicate visible text to the same Keet target inside the duplicate window", async () => {
+    let now = 1_000;
+    const sendText = vi.fn(async () => ({
+      messageId: "keet-message-1",
+      conversationId: "Plak",
+      raw: { ok: true },
+    }));
+    const adapter = createKeetMessageAdapter({
+      sendText,
+      now: () => now,
+      duplicateWindowMs: 120_000,
+    });
+
+    const first = await adapter.send.text({
+      cfg: {},
+      to: "Plak",
+      text: "Freut mich. Sag Bescheid wenns weitergeht.",
+      replyToId: "keet-message-parent",
+      accountId: "default",
+    });
+    now += 1_000;
+    const duplicate = await adapter.send.text({
+      cfg: {},
+      to: "Plak",
+      text: "Freut mich. Sag Bescheid wenns weitergeht.",
+      replyToId: "keet-message-parent",
+      accountId: "default",
+    });
+
+    expect(sendText).toHaveBeenCalledTimes(1);
+    expect(duplicate.receipt.primaryPlatformMessageId).toBe(first.receipt.primaryPlatformMessageId);
+  });
+
+  it("blocks internal runtime status messages before they reach Keet", async () => {
+    const sendText = vi.fn(async () => ({
+      messageId: "keet-message-1",
+      conversationId: "Plak",
+    }));
+    const adapter = createKeetMessageAdapter({ sendText });
+
+    await expect(adapter.send.text({
+      cfg: {},
+      to: "Plak",
+      text: "Model Fallback: anthropic/claude-opus-4-7 (selected openai/gpt-5.5; unknown)",
+      accountId: "default",
+    })).rejects.toThrow("Refusing to send internal OpenClaw status text to Keet");
+    expect(sendText).not.toHaveBeenCalled();
+  });
+
   it("resolves direct Keet message targets for the generic message path", async () => {
     const resolveTarget = keetChannelPlugin.messaging?.targetResolver?.resolveTarget;
     expect(resolveTarget).toBeDefined();
