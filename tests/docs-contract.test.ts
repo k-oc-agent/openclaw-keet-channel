@@ -150,4 +150,21 @@ describe("documentation contract", () => {
     expect(proof).toContain("No OC production install, reinstall, config mutation, or gateway restart");
     expect(proof).toContain("Approve OC production dogfood install for Keet ClawHub package v0.1.2");
   });
+
+  it("documents the current-version function UAT matrix", async () => {
+    const report = await readFile("docs/uat/current-version-0.1.19.md", "utf8");
+
+    expect(report).toContain("Issue: `Plak/openclaw-keet-channel#30`");
+    expect(report).toContain("## Function Matrix");
+    expect(report).toContain("normal DM send");
+    expect(report).toContain("normal Canary group send");
+    expect(report).toContain("native quote reply");
+    expect(report).toContain("Forward");
+    expect(report).toContain("join group as admin/member/read-only");
+    expect(report).toContain("delete own message");
+    expect(report).toContain("delete group chat");
+    expect(report).toContain("not executed: destructive");
+    expect(report).toContain("blocked: missing fixture");
+    expect(report).toContain("Channel keet is unavailable for message actions");
+  });
 });
