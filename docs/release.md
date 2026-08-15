@@ -10,8 +10,12 @@
 - Extends the CDP bridge candidate with `read --chat <conversation> --limit
   <1-100>` so the action can return the latest visible bounded rows from a
   verified target room.
-- Production install still requires an explicit production gate and fresh
-  `message read` CLI evidence.
+- Production gate completed on 2026-08-15: production readback loaded
+  `0.1.20`, gateway stayed healthy, and fresh `message read` CLI smokes for
+  Canary group and Plak DM returned `handledBy=plugin`, `payload.ok=true`.
+- Public ClawHub release remains alpha/WIP: text send/poll/read flows are
+  covered, but forward/delete/edit/react/pin/media, real invite/chat-info and
+  join-rights journeys are not complete user-facing features.
 
 ## 0.1.19 Scope
 

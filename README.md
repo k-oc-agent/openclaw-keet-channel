@@ -9,17 +9,33 @@ documentation. Native Pear/Holepunch transport is a later gate.
 
 ## Current State
 
+- Current production/ClawHub candidate: `0.1.20`.
 - Channel id: `keet`
 - OpenClaw surface: external channel plugin
-- MVP transport: local bridge command with argv-only execution
-- Supported send capability: durable final text
+- MVP transport: local bridge command with argv-only execution, currently backed
+  by a Keet Desktop CDP bridge candidate
+- Supported send capability: text send to configured DM and group targets
 - Inbound polling: bridge `poll` contract with allowlist routing and redacted
   dedupe state
+- Readback: `openclaw message read --channel keet` is implemented for bounded
+  visible message reads through the bridge
+- Reply safety: native reply/quote attempts fail closed when Keet Desktop does
+  not select a real reply target
+- Delivery guards: wrong-room, duplicate retry and internal status/progress text
+  guards are active
 - Join diagnostics: redacted `Autobase is closing` detection for failed invite
   joins before any profile recovery is attempted
-- Designed but not production-enabled: native gateway lifecycle
-- Disabled for MVP: media, polls, reactions, thread/reply preservation
-- Production group enablement: blocked until explicit allowlist/security gate
+- Production group enablement: allowed only for explicit configured groups and
+  allowlisted senders
+- Not currently implemented as user journeys: forward, edit, reactions, pins,
+  media/attachments, real Keet invite generation, real `chat-info`, message
+  deletion, group deletion and join-rights automation
+- Not live-tested in production because it is destructive or fixture-sensitive:
+  deleting messages, deleting group chats, and joining groups as
+  admin/member/read-only
+- Native Pear/Holepunch transport remains a later gate; do not store recovery
+  phrases, backup passwords, invite secrets, QR payloads or raw key material in
+  this repo or chat
 
 ## Development
 
@@ -44,6 +60,8 @@ The real DM, group chat, reply, restart, recovery, negative and security UAT
 matrix lives in `docs/uat/dev-stage-real-uat.md`. The repeatable harness and
 secret-safe evidence rules live in
 `docs/uat/persistent-dev-stage-harness.md`.
+The current production capability snapshot for the ClawHub release candidate is
+`docs/uat/current-version-0.1.20.md`.
 
 ## Configuration Sketch
 
