@@ -9,7 +9,7 @@ documentation. Native Pear/Holepunch transport is a later gate.
 
 ## Current State
 
-- Current production/ClawHub candidate: `0.1.20`.
+- Current production/ClawHub candidate: `0.1.21`.
 - Channel id: `keet`
 - OpenClaw surface: external channel plugin
 - MVP transport: local bridge command with argv-only execution, currently backed
@@ -61,7 +61,8 @@ matrix lives in `docs/uat/dev-stage-real-uat.md`. The repeatable harness and
 secret-safe evidence rules live in
 `docs/uat/persistent-dev-stage-harness.md`.
 The current production capability snapshot for the ClawHub release candidate is
-`docs/uat/current-version-0.1.20.md`.
+`docs/uat/current-version-0.1.20.md`; `0.1.21` is a ClawHub label/description
+correction release with the same runtime behavior.
 
 ## Configuration Sketch
 

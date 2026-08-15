@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.21
+
+- Remove the prerelease-style label from ClawHub-facing release metadata and
+  package documentation. This is a description/label correction only; runtime
+  behavior is unchanged from `0.1.20`.
+
 ## 0.1.20
 
 - Add the Keet shared `message read` action surface so `openclaw message read

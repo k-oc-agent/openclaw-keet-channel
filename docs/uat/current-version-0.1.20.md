@@ -61,7 +61,7 @@ not a complete Keet client automation surface.
 
 ## Public Release Summary
 
-This is an alpha/WIP OpenClaw channel plugin for Keet. It is suitable only for
-explicitly configured, allowlisted text-channel flows through a local bridge
-command. It is not a general-purpose Keet automation client and it does not
-support destructive or rich-message journeys yet.
+This OpenClaw channel plugin for Keet is suitable only for explicitly
+configured, allowlisted text-channel flows through a local bridge command. It
+is not a general-purpose Keet automation client and it does not support
+destructive or rich-message journeys yet.
