@@ -1,5 +1,18 @@
 # Release Notes and Rollback
 
+## 0.1.18 Scope
+
+- Fixes a production 0.1.16 dogfood failure where a single Keet DM send wrote
+  the message, then failed with `active room mismatch after send`, causing an
+  upstream delivery retry to post the same visible text again.
+- Before normal text sends without `replyToId`, the bridge now checks the
+  recent visible target-room rows and reuses an existing outgoing receipt when
+  the exact same text is already present.
+- Quote-reply sends are intentionally not short-circuited by text equality,
+  because they must keep proving native Reply/quote structure.
+- Production install still requires an explicit production gate and fresh
+  visible readback evidence.
+
 ## 0.1.17 Scope
 
 - Hardens Keet Desktop reply-target selection around the message action menu.

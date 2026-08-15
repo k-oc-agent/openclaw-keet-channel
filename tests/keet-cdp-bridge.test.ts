@@ -264,6 +264,32 @@ describe("Keet CDP bridge candidate", () => {
     });
   });
 
+  it("reuses a recent outgoing target-room row before retrying the same bridge send", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.findRecentOutgoingSentRow([
+      {
+        id: "m-old",
+        direction: "outgoing",
+        text: "older text",
+      },
+      {
+        id: "m-first-send",
+        direction: "outgoing",
+        text: "prod 0.1.16 duplicate smoke 0116-dupe-token",
+      },
+    ], "prod 0.1.16 duplicate smoke 0116-dupe-token")).toMatchObject({
+      id: "m-first-send",
+    });
+    expect(bridge.findRecentOutgoingSentRow([
+      {
+        id: "m-delayed-direction",
+        direction: "incoming",
+        text: "prod 0.1.16 duplicate smoke 0116-dupe-token",
+      },
+    ], "prod 0.1.16 duplicate smoke 0116-dupe-token")).toBeNull();
+  });
+
   it("declares the runtime command verbs needed by the bridge contract", async () => {
     const bridge = await import(bridgeModuleUrl);
 
