@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.17
+
+- Treat Keet Desktop `Forward` / `Forward Message` menu entries as explicit
+  unsupported actions during reply-target selection, so `send --reply-to`
+  fails with a Forward-specific error instead of silently downgrading to a
+  normal send or mixing Forward into the native Reply path.
+
 ## 0.1.16
 
 - Suppress duplicate Keet text sends to the same target/reply id inside a short

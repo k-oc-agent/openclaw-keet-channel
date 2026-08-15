@@ -1,5 +1,16 @@
 # Release Notes and Rollback
 
+## 0.1.17 Scope
+
+- Hardens Keet Desktop reply-target selection around the message action menu.
+- `Forward` and `Forward Message` menu entries are recognized as unsupported
+  Forward actions, not native Reply actions.
+- If a `send --reply-to` attempt sees Forward but cannot select Reply, the
+  bridge fails closed with a Forward-specific error instead of sending a normal
+  message.
+- Production install still requires an explicit production gate and fresh
+  visible readback evidence.
+
 ## 0.1.16 Scope
 
 - Fixes the production dogfood issue where the same Keet DM reply could be sent

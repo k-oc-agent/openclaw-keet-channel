@@ -344,11 +344,25 @@ function cssId(id) {
 }
 
 export function isReplyMenuItemLabel(text) {
-  return String(text || "").trim() === "Reply";
+  return normalizeMenuItemLabel(text) === "Reply";
 }
 
-export function assertReplyTargetSelected(replyToId, selectedReplyTarget) {
+export function isForwardMenuItemLabel(text) {
+  const label = normalizeMenuItemLabel(text);
+  return label === "Forward" || label === "Forward Message";
+}
+
+function normalizeMenuItemLabel(text) {
+  return String(text || "").trim().replace(/\s+/g, " ");
+}
+
+export function assertReplyTargetSelected(replyToId, selectedReplyTarget, options = {}) {
   if (replyToId && !selectedReplyTarget) {
+    if (options.forwardActionSeen) {
+      throw new Error(
+        `Keet CDP found native Forward but not Reply for ${replyToId}; refusing to send a normal message`,
+      );
+    }
     throw new Error(
       `Keet CDP could not select native reply target ${replyToId}; refusing to send a normal message`,
     );
@@ -367,13 +381,14 @@ export function findSentRow(rows, text) {
 
 async function maybeSelectReplyTarget(page, replyToId) {
   if (!replyToId) {
-    return false;
+    return { selected: false, forwardActionSeen: false };
   }
   const row = page.locator(`#${cssId(replyToId)}`).first();
   if (await row.count() === 0) {
-    return false;
+    return { selected: false, forwardActionSeen: false };
   }
   await row.hover();
+  let forwardActionSeen = false;
   const selectors = [
     '[data-testid="message-reply"]',
     '[data-testid="message-reply-button"]',
@@ -390,7 +405,7 @@ async function maybeSelectReplyTarget(page, replyToId) {
     try {
       await button.click({ timeout: 800 });
       await page.waitForTimeout(300);
-      return true;
+      return { selected: true, forwardActionSeen };
     } catch {}
   }
   const messageMenu = row.locator(".chat-message-menu").first();
@@ -406,12 +421,15 @@ async function maybeSelectReplyTarget(page, replyToId) {
         if (isReplyMenuItemLabel(label)) {
           await replyItem.click({ timeout: 800 });
           await page.waitForTimeout(300);
-          return true;
+          return { selected: true, forwardActionSeen };
+        }
+        if (isForwardMenuItemLabel(label)) {
+          forwardActionSeen = true;
         }
       }
     } catch {}
   }
-  return false;
+  return { selected: false, forwardActionSeen };
 }
 
 async function readSentRow(page, target, text) {
@@ -431,8 +449,10 @@ async function readSentRow(page, target, text) {
 
 async function sendText(page, target, text, replyToId) {
   await verifyActiveRoom(page, target, "before reply selection");
-  const selectedReplyTarget = await maybeSelectReplyTarget(page, replyToId);
-  assertReplyTargetSelected(replyToId, selectedReplyTarget);
+  const replySelection = await maybeSelectReplyTarget(page, replyToId);
+  assertReplyTargetSelected(replyToId, replySelection.selected, {
+    forwardActionSeen: replySelection.forwardActionSeen,
+  });
   await verifyActiveRoom(page, target, "before composer");
   const editor = page.locator('[contenteditable="true"][role="textbox"]').last();
   await editor.click();
@@ -444,7 +464,7 @@ async function sendText(page, target, text, replyToId) {
   if (!sent?.id) {
     throw new Error("Keet CDP send did not return latest outgoing message id");
   }
-  return { ...sent, replyToId: selectedReplyTarget ? replyToId : undefined };
+  return { ...sent, replyToId: replySelection.selected ? replyToId : undefined };
 }
 
 async function runSend(args) {
