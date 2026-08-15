@@ -1,5 +1,14 @@
 # Release Notes and Rollback
 
+## 0.1.21 Scope
+
+- ClawHub metadata correction release: remove the prerelease-style wording from
+  the public display/description path.
+- Runtime behavior is unchanged from `0.1.20`.
+- Known limits remain explicit: text send/poll/read flows are covered, but
+  forward/delete/edit/react/pin/media, real invite/chat-info and join-rights
+  journeys are not complete user-facing features.
+
 ## 0.1.20 Scope
 
 - Fixes `openclaw message read --channel keet ...` returning the misleading
@@ -13,9 +22,9 @@
 - Production gate completed on 2026-08-15: production readback loaded
   `0.1.20`, gateway stayed healthy, and fresh `message read` CLI smokes for
   Canary group and Plak DM returned `handledBy=plugin`, `payload.ok=true`.
-- Public ClawHub release remains alpha/WIP: text send/poll/read flows are
-  covered, but forward/delete/edit/react/pin/media, real invite/chat-info and
-  join-rights journeys are not complete user-facing features.
+- Text send/poll/read flows are covered, but
+  forward/delete/edit/react/pin/media, real invite/chat-info and join-rights
+  journeys are not complete user-facing features.
 
 ## 0.1.19 Scope
 

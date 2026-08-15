@@ -167,5 +167,6 @@ describe("documentation contract", () => {
     expect(report).toContain("blocked: missing fixture");
     expect(report).toContain("handledBy=plugin");
     expect(report).toContain("not a general-purpose Keet automation client");
+    expect(report).not.toContain("Alpha/WIP");
   });
 });
