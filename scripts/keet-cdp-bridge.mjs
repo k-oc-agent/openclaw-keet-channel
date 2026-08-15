@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 const DEFAULT_CDP_URL = process.env.KEET_CDP_URL || "http://127.0.0.1:9223";
 const DEFAULT_CONFIG_PATH = process.env.KEET_BRIDGE_CONFIG || "/etc/openclaw/keet-bridge.json";
 
-export const supportedActions = ["send", "poll"];
+export const supportedActions = ["send", "poll", "read"];
 
 function parseArgs(argv) {
   const args = {};
@@ -197,6 +197,37 @@ export function buildPollPayload(events, { limit }) {
     poll: {
       cursor: String(events.length),
       events: selected,
+    },
+  };
+}
+
+export function messageFromRow(row, { target, aliases }) {
+  const sender = normalizeSenderLabel(row?.sender || "");
+  return {
+    id: row.id,
+    chatType: target.chatType,
+    chat: target.conversationId,
+    direction: row.direction || "unknown",
+    ...(sender ? { sender: aliases[sender] ?? sender } : {}),
+    text: String(row.text || ""),
+    timestampMs: Number.isFinite(row.timestampMs) ? row.timestampMs : 0,
+  };
+}
+
+export function buildReadPayload(rows, { target, aliases, limit }) {
+  const messages = selectVisibleEvents(
+    Array.isArray(rows)
+      ? rows
+        .filter((row) => row?.id && row?.text)
+        .map((row) => messageFromRow(row, { target, aliases }))
+      : [],
+    { limit },
+  );
+  return {
+    ok: true,
+    read: {
+      chat: target.conversationId,
+      messages,
     },
   };
 }
@@ -534,6 +565,21 @@ async function runPoll(args) {
   return buildPollPayload(events, { limit });
 }
 
+async function runRead(args) {
+  const config = await loadBridgeConfig(args.config || DEFAULT_CONFIG_PATH);
+  const target = resolveChatTarget(config, args.chat);
+  const limit = Number.parseInt(args.limit ?? "50", 10);
+  return await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
+    await openChat(page, target.chat);
+    const rows = await readActiveRows(page, target);
+    return buildReadPayload(rows, {
+      target,
+      aliases: config.senderAliases,
+      limit,
+    });
+  });
+}
+
 export async function runCli(argv) {
   const args = parseArgs(argv);
   if (args.action === "send") {
@@ -541,6 +587,9 @@ export async function runCli(argv) {
   }
   if (args.action === "poll") {
     return runPoll(args);
+  }
+  if (args.action === "read") {
+    return runRead(args);
   }
   throw new Error(`unsupported action ${args.action || ""}`.trim());
 }

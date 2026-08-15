@@ -6,6 +6,7 @@ import {
   type ChannelPlugin,
 } from "openclaw/plugin-sdk/core";
 
+import { keetMessageActions } from "./actions.js";
 import {
   defaultKeetAccountId,
   isKeetAccountConfigured,
@@ -103,6 +104,7 @@ export const keetChannelPlugin: ChannelPlugin<KeetAccountConfig> = createChatCha
       },
     },
     message: keetMessageAdapter,
+    actions: keetMessageActions,
     messaging: {
       targetPrefixes: ["keet"],
       inferTargetChatType: inferKeetTargetChatType,

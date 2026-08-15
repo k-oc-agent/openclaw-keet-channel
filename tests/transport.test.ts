@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import {
   buildBridgeCliArgs,
   normalizeKeetSendTarget,
+  readMessagesWithBridgeCli,
   pollInboundWithBridgeCli,
   sendTextWithBridgeCli,
 } from "../src/transport.js";
@@ -64,6 +65,24 @@ describe("Keet bridge-cli transport", () => {
       "25",
       "--cursor",
       "cursor-1",
+    ]);
+  });
+
+  it("builds read argv with an explicit Keet target and bounded limit", () => {
+    expect(
+      buildBridgeCliArgs({
+        bridgeCommand: "/usr/local/bin/keet-bridge",
+        action: "read",
+        to: "keet:group:K OC Keet Canary",
+        limit: 10,
+      }),
+    ).toEqual([
+      "/usr/local/bin/keet-bridge",
+      "read",
+      "--chat",
+      "K OC Keet Canary",
+      "--limit",
+      "10",
     ]);
   });
 
@@ -193,6 +212,56 @@ describe("Keet bridge-cli transport", () => {
       "25",
       "--cursor",
       "cursor-1",
+    ]);
+  });
+
+  it("parses read messages through the documented bridge contract", async () => {
+    const run = vi.fn(async () => ({
+      stdout: JSON.stringify({
+        ok: true,
+        read: {
+          chat: "K OC Keet Canary",
+          messages: [
+            {
+              id: "m-read-1",
+              direction: "incoming",
+              sender: "plak0815",
+              text: "readback",
+              timestampMs: 1786513700000,
+            },
+          ],
+        },
+      }),
+    }));
+
+    await expect(
+      readMessagesWithBridgeCli({
+        bridgeCommand: "/usr/local/bin/keet-bridge",
+        to: "keet:group:K OC Keet Canary",
+        limit: 10,
+        run,
+      }),
+    ).resolves.toMatchObject({
+      conversationId: "K OC Keet Canary",
+      messages: [
+        {
+          messageId: "m-read-1",
+          direction: "incoming",
+          senderId: "plak0815",
+          text: "readback",
+          timestampMs: 1786513700000,
+        },
+      ],
+      raw: expect.any(Object),
+    });
+
+    expect(run).toHaveBeenCalledWith([
+      "/usr/local/bin/keet-bridge",
+      "read",
+      "--chat",
+      "K OC Keet Canary",
+      "--limit",
+      "10",
     ]);
   });
 });

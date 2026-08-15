@@ -316,6 +316,6 @@ describe("Keet CDP bridge candidate", () => {
   it("declares the runtime command verbs needed by the bridge contract", async () => {
     const bridge = await import(bridgeModuleUrl);
 
-    expect(bridge.supportedActions).toEqual(["send", "poll"]);
+    expect(bridge.supportedActions).toEqual(["send", "poll", "read"]);
   });
 });
