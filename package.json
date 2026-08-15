@@ -1,6 +1,6 @@
 {
   "name": "@plak/openclaw-keet-channel",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "OpenClaw channel plugin for Keet/Holepunch messaging through a local bridge adapter.",
   "type": "module",
   "license": "MIT",
@@ -68,7 +68,7 @@
     "install": {
       "minHostVersion": ">=2026.7.1-2",
       "clawhubSpec": "clawhub:@plak/openclaw-keet-channel",
-      "npmSpec": "@plak/openclaw-keet-channel@0.1.17"
+      "npmSpec": "@plak/openclaw-keet-channel@0.1.18"
     },
     "compat": {
       "pluginApi": ">=2026.7.1",

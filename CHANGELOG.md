@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.18
+
+- Reuse a recent visible outgoing target-room row before retrying the same
+  normal bridge send, preventing OpenClaw delivery retries after a post-send
+  room-mismatch failure from posting identical Keet DM text twice.
+
 ## 0.1.17
 
 - Treat Keet Desktop `Forward` / `Forward Message` menu entries as explicit

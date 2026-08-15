@@ -379,6 +379,11 @@ export function findSentRow(rows, text) {
     ?? null;
 }
 
+export function findRecentOutgoingSentRow(rows, text) {
+  const recentRows = Array.isArray(rows) ? rows.slice(-12) : [];
+  return findSentRow(recentRows.filter((row) => row?.direction === "outgoing"), text);
+}
+
 async function maybeSelectReplyTarget(page, replyToId) {
   if (!replyToId) {
     return { selected: false, forwardActionSeen: false };
@@ -449,6 +454,12 @@ async function readSentRow(page, target, text) {
 
 async function sendText(page, target, text, replyToId) {
   await verifyActiveRoom(page, target, "before reply selection");
+  if (!replyToId) {
+    const existingSent = findRecentOutgoingSentRow(await readActiveRows(page, target), text);
+    if (existingSent?.id) {
+      return { ...existingSent, replyToId: undefined };
+    }
+  }
   const replySelection = await maybeSelectReplyTarget(page, replyToId);
   assertReplyTargetSelected(replyToId, replySelection.selected, {
     forwardActionSeen: replySelection.forwardActionSeen,
