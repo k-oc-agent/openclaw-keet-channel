@@ -1,5 +1,18 @@
 # Release Notes and Rollback
 
+## 0.1.20 Scope
+
+- Fixes `openclaw message read --channel keet ...` returning the misleading
+  `Channel keet is unavailable for message actions (plugin not loaded)` while
+  the Keet channel was installed and send/poll worked.
+- Adds the shared OpenClaw message-action surface for read-only Keet message
+  readback and routes it through the existing bridge CLI boundary.
+- Extends the CDP bridge candidate with `read --chat <conversation> --limit
+  <1-100>` so the action can return the latest visible bounded rows from a
+  verified target room.
+- Production install still requires an explicit production gate and fresh
+  `message read` CLI evidence.
+
 ## 0.1.19 Scope
 
 - Fixes the Canary group inbound blocker where Keet Desktop can render a group

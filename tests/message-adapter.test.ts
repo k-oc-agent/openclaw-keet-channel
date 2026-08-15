@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { createKeetMessageActions } from "../src/actions.js";
 import { keetChannelPlugin } from "../src/index.js";
 import { createKeetMessageAdapter } from "../src/message-adapter.js";
 
@@ -28,6 +29,55 @@ const cfg = {
 };
 
 describe("Keet message adapter", () => {
+  it("advertises and handles the shared message read action", async () => {
+    expect(keetChannelPlugin.actions?.supportsAction?.({ action: "read" })).toBe(true);
+
+    const readMessages = vi.fn(async () => ({
+      conversationId: "K OC Keet Canary 2026-08-11",
+      messages: [
+        {
+          messageId: "m-read-1",
+          conversationId: "K OC Keet Canary 2026-08-11",
+          direction: "incoming" as const,
+          senderId: "plak0815",
+          text: "readback",
+        },
+      ],
+    }));
+    const actions = createKeetMessageActions({ readMessages });
+
+    expect(actions?.describeMessageTool({ cfg, accountId: "default" })?.actions).toContain("read");
+    await expect(actions?.handleAction?.({
+      channel: "keet",
+      action: "read",
+      cfg,
+      accountId: "default",
+      params: {
+        target: "keet:group:K OC Keet Canary 2026-08-11",
+        limit: 2,
+      },
+    })).resolves.toMatchObject({
+      details: {
+        ok: true,
+        channel: "keet",
+        action: "read",
+        conversationId: "K OC Keet Canary 2026-08-11",
+        messages: [
+          {
+            messageId: "m-read-1",
+            text: "readback",
+          },
+        ],
+      },
+    });
+    expect(readMessages).toHaveBeenCalledWith({
+      cfg,
+      to: "keet:group:K OC Keet Canary 2026-08-11",
+      limit: 2,
+      accountId: "default",
+    });
+  });
+
   it("declares durable text replies through Keet native reply targets", () => {
     const adapter = createKeetMessageAdapter({
       sendText: async () => ({

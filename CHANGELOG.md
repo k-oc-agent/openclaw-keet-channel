@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.20
+
+- Add the Keet shared `message read` action surface so `openclaw message read
+  --channel keet ...` reaches the plugin instead of failing with the misleading
+  `plugin not loaded` message.
+- Extend the bridge CLI contract and CDP bridge candidate with read-only
+  `read --chat ... --limit ...` DOM readback.
+
 ## 0.1.19
 
 - Normalize Keet group sender labels such as `Plak\nAdmin` before applying

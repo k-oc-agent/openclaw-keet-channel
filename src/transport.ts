@@ -23,6 +23,14 @@ export type BridgeCliPollParams = {
   run?: BridgeCliRun;
 };
 
+export type BridgeCliReadParams = {
+  bridgeCommand: string;
+  to: string;
+  limit?: number;
+  signal?: AbortSignal;
+  run?: BridgeCliRun;
+};
+
 export type KeetSendReceipt = {
   messageId: string;
   conversationId: string;
@@ -46,6 +54,23 @@ export type KeetPollResult = {
   raw?: unknown;
 };
 
+export type KeetReadMessage = {
+  messageId: string;
+  conversationId: string;
+  chatType?: "direct" | "group";
+  direction?: "incoming" | "outgoing" | "unknown";
+  senderId?: string;
+  text: string;
+  timestampMs?: number;
+  raw?: unknown;
+};
+
+export type KeetReadResult = {
+  conversationId: string;
+  messages: KeetReadMessage[];
+  raw?: unknown;
+};
+
 type BridgeCliArgsParams = {
   bridgeCommand: string;
   action: "send";
@@ -57,6 +82,11 @@ type BridgeCliArgsParams = {
   action: "poll";
   accountId: string;
   cursor?: string | null;
+  limit?: number;
+} | {
+  bridgeCommand: string;
+  action: "read";
+  to: string;
   limit?: number;
 };
 
@@ -118,6 +148,21 @@ export function buildBridgeCliArgs(params: BridgeCliArgsParams): string[] {
       argv.push("--cursor", params.cursor);
     }
     return argv;
+  }
+  if (params.action === "read") {
+    const to = normalizeKeetSendTarget(params.to);
+    const limit = params.limit ?? 50;
+    if (!Number.isInteger(limit) || limit < 1 || limit > 100) {
+      throw new Error("Keet read limit must be an integer from 1 to 100");
+    }
+    return [
+      params.bridgeCommand,
+      params.action,
+      "--chat",
+      to,
+      "--limit",
+      String(limit),
+    ];
   }
   const to = normalizeKeetSendTarget(params.to);
   if (!params.text.trim()) {
@@ -226,6 +271,51 @@ function parseBridgePoll(stdout: string, accountId: string): KeetPollResult {
   };
 }
 
+function directionField(value: unknown): "incoming" | "outgoing" | "unknown" | undefined {
+  if (value === "incoming" || value === "outgoing" || value === "unknown") {
+    return value;
+  }
+  return undefined;
+}
+
+function normalizeBridgeReadMessage(value: unknown, fallbackConversationId: string): KeetReadMessage {
+  const raw = asRecord(value);
+  const conversationId = stringField(raw.conversationId) ?? stringField(raw.chat) ?? fallbackConversationId;
+  const messageId = stringField(raw.messageId) ?? stringField(raw.id);
+  const text = stringField(raw.text);
+  if (!messageId) {
+    throw new Error("Keet bridge read message is missing message id");
+  }
+  if (!text) {
+    throw new Error("Keet bridge read message is missing text");
+  }
+  return {
+    messageId,
+    conversationId,
+    chatType: raw.chatType === "group" ? "group" : raw.chatType === "direct" ? "direct" : undefined,
+    direction: directionField(raw.direction),
+    senderId: stringField(raw.senderId) ?? stringField(raw.sender),
+    text,
+    timestampMs: timestampField(raw.timestampMs),
+    raw,
+  };
+}
+
+function parseBridgeRead(stdout: string, fallbackConversationId: string): KeetReadResult {
+  const payload = JSON.parse(stdout) as unknown;
+  const root = asRecord(payload);
+  const read = asRecord(root.read);
+  const conversationId = stringField(read.conversationId) ?? stringField(read.chat) ?? fallbackConversationId;
+  const messages = Array.isArray(read.messages)
+    ? read.messages.map((message) => normalizeBridgeReadMessage(message, conversationId))
+    : [];
+  return {
+    conversationId,
+    messages,
+    raw: read,
+  };
+}
+
 export async function sendTextWithBridgeCli(params: BridgeCliSendParams): Promise<KeetSendReceipt> {
   const argv = buildBridgeCliArgs({
     bridgeCommand: params.bridgeCommand,
@@ -248,4 +338,16 @@ export async function pollInboundWithBridgeCli(params: BridgeCliPollParams): Pro
   });
   const result = params.run ? await params.run(argv) : await defaultRun(argv, params.signal);
   return parseBridgePoll(result.stdout, params.accountId);
+}
+
+export async function readMessagesWithBridgeCli(params: BridgeCliReadParams): Promise<KeetReadResult> {
+  const to = normalizeKeetSendTarget(params.to);
+  const argv = buildBridgeCliArgs({
+    bridgeCommand: params.bridgeCommand,
+    action: "read",
+    to,
+    limit: params.limit,
+  });
+  const result = params.run ? await params.run(argv) : await defaultRun(argv, params.signal);
+  return parseBridgeRead(result.stdout, to);
 }

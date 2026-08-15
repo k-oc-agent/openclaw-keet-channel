@@ -82,6 +82,38 @@ own local configuration. A CDP adapter that opens Keet Desktop chats SHOULD
 prefer sidebar room-list entries over generic text matches so that a direct
 peer name visible inside a group history does not select the wrong chat.
 
+### read
+
+```bash
+keet-bridge read --chat <conversation-id-or-name> --limit <1-100>
+```
+
+The bridge returns JSON on stdout:
+
+```json
+{
+  "ok": true,
+  "read": {
+    "chat": "conversation-id-or-name",
+    "messages": [
+      {
+        "id": "message-id",
+        "chatType": "group",
+        "chat": "conversation-id-or-name",
+        "direction": "incoming",
+        "sender": "plak0815",
+        "text": "visible message body",
+        "timestampMs": 1786513700000
+      }
+    ]
+  }
+}
+```
+
+`read` is a read-only message action. UI-backed bridge adapters MUST verify the
+requested room before reading rows and MUST return only the latest visible
+bounded row set when the provider exposes a virtualized DOM.
+
 ### invite
 
 ```bash
@@ -146,5 +178,5 @@ membership count before enabling or testing production routing.
 
 The first implementation may use a local Keet Desktop/CDP bridge adapter. That
 adapter is not the public plugin contract. A later native Pear/Holepunch bridge
-can replace it as long as it keeps the same `send`, `poll`, `invite` and
+can replace it as long as it keeps the same `send`, `poll`, `read`, `invite` and
 `chat-info` JSON contract.
