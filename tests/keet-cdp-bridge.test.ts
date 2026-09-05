@@ -318,4 +318,13 @@ describe("Keet CDP bridge candidate", () => {
 
     expect(bridge.supportedActions).toEqual(["send", "poll", "read"]);
   });
+
+  it("uses a bounded CDP connect timeout by default", async () => {
+    const bridge = await import(bridgeModuleUrl);
+
+    expect(bridge.normalizeCdpConnectTimeoutMs(undefined)).toBe(5_000);
+    expect(bridge.normalizeCdpConnectTimeoutMs("1200")).toBe(1_200);
+    expect(bridge.normalizeCdpConnectTimeoutMs("99")).toBe(5_000);
+    expect(bridge.normalizeCdpConnectTimeoutMs("90000")).toBe(5_000);
+  });
 });

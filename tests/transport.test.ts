@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import {
+  bridgeCliTimeoutMsForAction,
   buildBridgeCliArgs,
   normalizeKeetSendTarget,
   readMessagesWithBridgeCli,
@@ -66,6 +67,21 @@ describe("Keet bridge-cli transport", () => {
       "--cursor",
       "cursor-1",
     ]);
+  });
+
+  it("keeps gateway poll bridge calls below the historical CDP hang window", () => {
+    expect(bridgeCliTimeoutMsForAction([
+      "/usr/local/bin/keet-bridge",
+      "poll",
+      "--account",
+      "default",
+    ])).toBe(15_000);
+    expect(bridgeCliTimeoutMsForAction([
+      "/usr/local/bin/keet-bridge",
+      "send",
+      "--chat",
+      "Plak",
+    ])).toBe(60_000);
   });
 
   it("builds read argv with an explicit Keet target and bounded limit", () => {

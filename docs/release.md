@@ -1,5 +1,21 @@
 # Release Notes and Rollback
 
+## 0.1.22 Scope
+
+- Hardens the Keet Desktop CDP bridge after K-OC Ops disabled production Keet
+  for repeated `connectOverCDP` poll timeouts on OpenClaw `2026.8.2`.
+- The plugin still compiles and tests cleanly against OpenClaw `2026.8.1`,
+  `2026.8.2`, and `2026.9.1`; see
+  `docs/uat/openclaw-version-compat-2026-09-05.md`.
+- The CDP bridge now defaults CDP connect attempts to 5s and the plugin
+  transport caps `poll` bridge subprocesses at 15s. A hung Keet Desktop/CDP
+  endpoint should now degrade the Keet account quickly instead of occupying the
+  Gateway for the previous 30-60s window.
+- Production Keet remains a separate K-OC Ops gate: do not re-enable the
+  production channel, restart the Gateway, reset the Keet profile, or send live
+  Keet messages from this release without explicit coordination through
+  `openclaw/k-workspace#40`.
+
 ## 0.1.21 Scope
 
 - ClawHub metadata correction release: remove the prerelease-style wording from
