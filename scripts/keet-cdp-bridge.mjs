@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const DEFAULT_CDP_URL = process.env.KEET_CDP_URL || "http://127.0.0.1:9223";
 const DEFAULT_CONFIG_PATH = process.env.KEET_BRIDGE_CONFIG || "/etc/openclaw/keet-bridge.json";
+const DEFAULT_CDP_CONNECT_TIMEOUT_MS = 5_000;
 
 export const supportedActions = ["send", "poll", "read"];
 
@@ -232,6 +233,17 @@ export function buildReadPayload(rows, { target, aliases, limit }) {
   };
 }
 
+export function normalizeCdpConnectTimeoutMs(value) {
+  const parsed = Number.parseInt(String(value ?? ""), 10);
+  return Number.isInteger(parsed) && parsed >= 500 && parsed <= 30_000
+    ? parsed
+    : DEFAULT_CDP_CONNECT_TIMEOUT_MS;
+}
+
+function cdpConnectTimeoutMsFromArgs(args) {
+  return normalizeCdpConnectTimeoutMs(args["cdp-timeout-ms"] ?? process.env.KEET_CDP_CONNECT_TIMEOUT_MS);
+}
+
 function targetFromChat(chat) {
   return {
     chat,
@@ -240,9 +252,11 @@ function targetFromChat(chat) {
   };
 }
 
-async function withKeetPage(cdpUrl, fn) {
+async function withKeetPage(cdpUrl, fn, options = {}) {
   const { chromium } = await import("playwright-core");
-  const browser = await chromium.connectOverCDP(cdpUrl);
+  const browser = await chromium.connectOverCDP(cdpUrl, {
+    timeout: normalizeCdpConnectTimeoutMs(options.connectTimeoutMs),
+  });
   try {
     const context = browser.contexts()[0];
     const page = context.pages()[0];
@@ -526,7 +540,7 @@ async function runSend(args) {
   const sent = await withKeetPage(args.cdp || DEFAULT_CDP_URL, async (page) => {
     await openChat(page, target.chat);
     return await sendText(page, target, text, replyToId);
-  });
+  }, { connectTimeoutMs: cdpConnectTimeoutMsFromArgs(args) });
   return {
     ok: true,
     send: {
@@ -561,7 +575,7 @@ async function runPoll(args) {
         }
       }
     }
-  });
+  }, { connectTimeoutMs: cdpConnectTimeoutMsFromArgs(args) });
   return buildPollPayload(events, { limit });
 }
 
@@ -577,7 +591,7 @@ async function runRead(args) {
       aliases: config.senderAliases,
       limit,
     });
-  });
+  }, { connectTimeoutMs: cdpConnectTimeoutMsFromArgs(args) });
 }
 
 export async function runCli(argv) {

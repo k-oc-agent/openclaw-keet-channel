@@ -71,6 +71,9 @@ export type KeetReadResult = {
   raw?: unknown;
 };
 
+const defaultBridgeCliTimeoutMs = 60_000;
+const defaultPollBridgeCliTimeoutMs = 15_000;
+
 type BridgeCliArgsParams = {
   bridgeCommand: string;
   action: "send";
@@ -176,13 +179,17 @@ export function buildBridgeCliArgs(params: BridgeCliArgsParams): string[] {
   return argv;
 }
 
+export function bridgeCliTimeoutMsForAction(argv: string[]): number {
+  return argv[1] === "poll" ? defaultPollBridgeCliTimeoutMs : defaultBridgeCliTimeoutMs;
+}
+
 async function defaultRun(argv: string[], signal?: AbortSignal): Promise<{ stdout: string }> {
   const [command, ...args] = argv;
   return execFileAsync(command, args, {
     encoding: "utf8",
     maxBuffer: 1024 * 1024,
     signal,
-    timeout: 60_000,
+    timeout: bridgeCliTimeoutMsForAction(argv),
   });
 }
 

@@ -82,6 +82,12 @@ own local configuration. A CDP adapter that opens Keet Desktop chats SHOULD
 prefer sidebar room-list entries over generic text matches so that a direct
 peer name visible inside a group history does not select the wrong chat.
 
+UI-backed poll adapters MUST fail boundedly when the desktop automation
+endpoint is present but hung. The reference CDP bridge defaults its CDP connect
+attempt to 5s and the plugin transport caps `poll` bridge subprocesses at 15s;
+operators can temporarily override the CDP connect budget for diagnostics with
+`KEET_CDP_CONNECT_TIMEOUT_MS` or `--cdp-timeout-ms`.
+
 ### read
 
 ```bash

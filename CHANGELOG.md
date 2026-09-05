@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.22
+
+- Bound Keet Desktop CDP poll failures after K-OC Ops disabled the production
+  channel for repeated 30s `connectOverCDP` timeouts on OpenClaw `2026.8.2`.
+- Default CDP connect timeout is now 5s, and bridge `poll` subprocesses are
+  capped at 15s so a hung desktop/CDP target degrades Keet without tying up the
+  Gateway for the historical 30-60s window.
+- Record compatibility evidence for OpenClaw `2026.8.1`, `2026.8.2`, and
+  `2026.9.1`.
+
 ## 0.1.21
 
 - Remove the prerelease-style label from ClawHub-facing release metadata and
